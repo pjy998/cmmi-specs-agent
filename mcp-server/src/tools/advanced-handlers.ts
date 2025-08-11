@@ -6,6 +6,7 @@
 import { TaskAnalyzer } from '../utils/task-analyzer.js';
 import { I18n } from '../utils/i18n.js';
 import { logger } from '../utils/logger.js';
+import { FileOperations, DocumentTemplates } from '../utils/file-operations.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -426,28 +427,30 @@ instructions: |-
       }
 
       const executionId = uuidv4();
+      
+      // 从任务内容中提取特征名称
+      const featureName = this.extractFeatureName(task_content);
+      
       logger.info('Starting multi-agent workflow execution', { 
         executionId, 
-        task: task_content.substring(0, 100) 
+        task: task_content.substring(0, 100),
+        projectPath: project_path,
+        featureName 
       });
 
       // 1. 分析任务并确定需要的代理
       let requiredAgents = selected_agents;
       if (!requiredAgents || requiredAgents.length === 0) {
-        const analyzer = new TaskAnalyzer();
-        const analysis = analyzer.analyze(task_content);
+        // 确保完整的CMMI文档生成 - 始终包含所有核心代理
+        requiredAgents = [
+          'requirements-agent',  // 需求分析 (RD)
+          'design-agent',        // 设计文档 (TS) 
+          'tasks-agent',         // 任务管理 (PI)
+          'test-agent',          // 测试计划 (VER)
+          'coding-agent'         // 实现指南 (TS)
+        ];
         
-        requiredAgents = [];
-        if (analysis.requires_agents.requirements) requiredAgents.push('requirements-agent');
-        if (analysis.requires_agents.design) requiredAgents.push('design-agent');
-        if (analysis.requires_agents.implementation) requiredAgents.push('coding-agent');
-        if (analysis.requires_agents.testing) requiredAgents.push('test-agent');
-        if (analysis.requires_agents.documentation) requiredAgents.push('spec-agent');
-        
-        // 默认添加任务管理代理作为协调者
-        if (!requiredAgents.includes('tasks-agent')) {
-          requiredAgents.unshift('tasks-agent');
-        }
+        logger.info('Using complete CMMI agent set for full documentation generation');
       }
 
       // 2. 检查代理配置是否存在
@@ -487,7 +490,9 @@ instructions: |-
         executionPlan,
         context_sharing,
         max_iterations,
-        executionId
+        executionId,
+        project_path,
+        featureName
       );
 
       logger.info('Multi-agent workflow completed', { 
@@ -515,6 +520,20 @@ instructions: |-
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * 从任务内容中提取特征名称
+   */
+  private static extractFeatureName(taskContent: string): string {
+    // 简单的特征名称提取逻辑
+    const words = taskContent.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2)
+      .slice(0, 3);
+    
+    return words.join('-') || 'feature';
   }
 
   /**
@@ -599,7 +618,9 @@ instructions: |-
     plan: any, 
     contextSharing: boolean, 
     _maxIterations: number, 
-    executionId: string
+    executionId: string,
+    projectPath?: string,
+    featureName?: string
   ): Promise<any> {
     const startTime = Date.now();
     const results = [];
@@ -615,11 +636,13 @@ instructions: |-
           inputContext = `${sharedContext}\n\nCurrent Task: ${step.input_context}`;
         }
 
-        // 模拟代理执行（实际实现中会调用具体的代理）
+        // 执行代理（支持真实文档生成）
         const stepResult = await this.simulateAgentExecution(
           step.agent,
           inputContext,
-          step.role
+          step.role,
+          projectPath,
+          featureName
         );
 
         results.push({
@@ -668,6 +691,159 @@ instructions: |-
   private static async simulateAgentExecution(
     agentName: string, 
     input: string, 
+    role: string,
+    projectPath?: string,
+    featureName?: string
+  ): Promise<any> {
+    const startTime = Date.now();
+    
+    try {
+      // If projectPath and featureName are provided, generate actual documents
+      if (projectPath && featureName) {
+        return await this.executeAgentWithFileGeneration(agentName, input, role, projectPath, featureName);
+      }
+      
+      // Fallback to simulation for compatibility
+      return await this.executeAgentSimulation(agentName, input, role);
+      
+    } catch (error) {
+      logger.error(`Error in agent execution for ${agentName}:`, error);
+      const executionTime = Date.now() - startTime;
+      
+      return {
+        output: `Error in ${role}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        executionTime,
+        status: 'failed'
+      };
+    }
+  }
+
+  /**
+   * Execute agent with actual file generation
+   */
+  private static async executeAgentWithFileGeneration(
+    agentName: string,
+    input: string,
+    role: string,
+    projectPath: string,
+    featureName: string
+  ): Promise<any> {
+    const startTime = Date.now();
+    
+    // Create feature directory structure
+    await FileOperations.createCmmiStructure({
+      projectPath,
+      featureName,
+      createDocs: true,
+      createSrc: true,
+      createTests: true
+    });
+
+    const docsPath = path.join(projectPath, featureName, 'docs');
+    let outputMessage = '';
+    let filePath = '';
+
+    switch (agentName) {
+      case 'requirements-agent':
+        filePath = path.join(docsPath, 'requirements.md');
+        const reqContent = DocumentTemplates.requirements(featureName, input);
+        await FileOperations.createCmmiDocument(filePath, reqContent, 'RD');
+        outputMessage = `Requirements document generated: ${filePath}`;
+        break;
+
+      case 'design-agent':
+        filePath = path.join(docsPath, 'design.md');
+        const reqPath = path.join(docsPath, 'requirements.md');
+        const designContent = DocumentTemplates.design(featureName, reqPath);
+        await FileOperations.createCmmiDocument(filePath, designContent, 'TS');
+        outputMessage = `Design document generated: ${filePath}`;
+        break;
+
+      case 'tasks-agent':
+        filePath = path.join(docsPath, 'tasks.md');
+        const designPath = path.join(docsPath, 'design.md');
+        const tasksContent = DocumentTemplates.tasks(featureName, designPath);
+        await FileOperations.createCmmiDocument(filePath, tasksContent, 'PI');
+        outputMessage = `Task management document generated: ${filePath}`;
+        break;
+
+      case 'test-agent':
+        filePath = path.join(docsPath, 'tests.md');
+        const tasksPath = path.join(docsPath, 'tasks.md');
+        const testsContent = DocumentTemplates.tests(featureName, tasksPath);
+        await FileOperations.createCmmiDocument(filePath, testsContent, 'VER');
+        outputMessage = `Test plan document generated: ${filePath}`;
+        break;
+
+      case 'coding-agent':
+        filePath = path.join(docsPath, 'implementation.md');
+        const implDesignPath = path.join(docsPath, 'design.md');
+        const implContent = DocumentTemplates.implementation(featureName, implDesignPath);
+        await FileOperations.createCmmiDocument(filePath, implContent, 'TS');
+        outputMessage = `Implementation guide generated: ${filePath}`;
+        break;
+
+      case 'spec-agent':
+        // Generate all documents in sequence
+        const allPaths = [];
+        
+        // Requirements
+        const specReqPath = path.join(docsPath, 'requirements.md');
+        const specReqContent = DocumentTemplates.requirements(featureName, input);
+        await FileOperations.createCmmiDocument(specReqPath, specReqContent, 'RD');
+        allPaths.push(specReqPath);
+        
+        // Design
+        const specDesignPath = path.join(docsPath, 'design.md');
+        const specDesignContent = DocumentTemplates.design(featureName, specReqPath);
+        await FileOperations.createCmmiDocument(specDesignPath, specDesignContent, 'TS');
+        allPaths.push(specDesignPath);
+        
+        // Tasks
+        const specTasksPath = path.join(docsPath, 'tasks.md');
+        const specTasksContent = DocumentTemplates.tasks(featureName, specDesignPath);
+        await FileOperations.createCmmiDocument(specTasksPath, specTasksContent, 'PI');
+        allPaths.push(specTasksPath);
+        
+        // Tests
+        const specTestsPath = path.join(docsPath, 'tests.md');
+        const specTestsContent = DocumentTemplates.tests(featureName, specTasksPath);
+        await FileOperations.createCmmiDocument(specTestsPath, specTestsContent, 'VER');
+        allPaths.push(specTestsPath);
+        
+        // Implementation
+        const specImplPath = path.join(docsPath, 'implementation.md');
+        const specImplContent = DocumentTemplates.implementation(featureName, specDesignPath);
+        await FileOperations.createCmmiDocument(specImplPath, specImplContent, 'TS');
+        allPaths.push(specImplPath);
+        
+        outputMessage = `Complete CMMI documentation generated:\n${allPaths.map(p => `- ${p}`).join('\n')}`;
+        filePath = docsPath;
+        break;
+
+      default:
+        outputMessage = `Agent ${agentName} not configured for file generation. Using simulation.`;
+        return await this.executeAgentSimulation(agentName, input, role);
+    }
+
+    const executionTime = Date.now() - startTime;
+    logger.info(`Generated document for ${agentName}: ${filePath}`);
+
+    return {
+      output: outputMessage,
+      executionTime,
+      status: 'success',
+      filePath,
+      featureName
+    };
+  }
+
+  /**
+   * Fallback simulation for backward compatibility
+   */
+  private static async executeAgentSimulation(
+    agentName: string,
+    input: string,
     role: string
   ): Promise<any> {
     const startTime = Date.now();

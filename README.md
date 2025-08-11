@@ -1,77 +1,112 @@
-# CMMI 多代理工作流系统
+# 🚀 CMMI Specs Agent
 
-基于 MCP (Model Context Protocol) 的 CMMI 标准多代理工作流系统。
+> 智能化CMMI多代理文档自动生成系统
 
-## 📁 项目结构
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![VS Code](https://img.shields.io/badge/VS%20Code-007ACC?logo=visual-studio-code&logoColor=white)](https://code.visualstudio.com/)
 
-```
-├── mcp-server/           # MCP 服务器源码
-│   ├── src/             # TypeScript 源码
-│   ├── dist/            # 编译后的 JavaScript
-│   ├── package.json     # Node.js 依赖
-│   └── README.md        # 服务器详细说明
-├── tests/               # 测试脚本
-│   ├── test-mcp.js      # 基础服务器测试
-│   ├── test-advanced-tools.cjs  # 完整功能测试
-│   └── README.md        # 测试说明
-├── USAGE_GUIDE.md       # 详细使用指南
-├── agent.md             # CMMI 代理规范
-└── example-agents.md    # 代理示例配置
-```
+基于 **MCP (Model Context Protocol)** 的多智能体系统，能够自动生成符合 CMMI 标准的完整软件开发文档集。
+
+## ✨ 核心特性
+
+🎯 **完整的CMMI文档自动生成**
+- 需求文档 (Requirements Document - RD)
+- 设计文档 (Technical Solution - TS)  
+- 任务管理文档 (Product Integration - PI)
+- 测试计划文档 (Verification - VER)
+- 实现指南文档 (Technical Solution - TS)
+
+🤖 **智能多代理协作**
+- 5个专业化代理分工协作
+- 智能任务分析和代理选择
+- 上下文共享和迭代优化
+
+⚡ **即用即享**
+- VS Code一键配置，全局可用
+- 任何项目都可直接使用
+- 无需重复安装和配置
 
 ## 🚀 快速开始
 
-### 1. 构建 MCP 服务器
+### 1. 安装配置
 ```bash
-cd mcp-server
-npm install
-npm run build
+# 克隆项目
+git clone https://github.com/pjy998/cmmi-specs-agent.git
+cd cmmi-specs-agent
+
+# 安装和配置
+./install-mcp.sh
 ```
 
-### 2. 运行测试
-```bash
-cd tests
-node test-mcp.js          # 基础测试
-node test-advanced-tools.cjs  # 完整测试
+### 2. 在任何项目中使用
+在VS Code中打开任何项目，使用Copilot Chat：
+
+```
+@cmmi-specs-agent 为"用户认证系统"生成完整CMMI文档
 ```
 
-### 3. 配置 VS Code
-参考 `USAGE_GUIDE.md` 中的详细配置说明。
+或使用具体工具：
+```
+使用mcp_cmmi-specs-ag_workflow_execute工具为"订单管理系统"生成文档
+```
 
-## 🔧 核心工具
+## 📁 生成的文档结构
 
-- `agent_create` - 创建 AI 代理
-- `agent_list` - 列出所有代理  
-- `task_analyze` - 分析任务复杂度
-- `config_validate` - 验证代理配置
-- `cmmi_init` - 初始化 CMMI 代理
-- `workflow_execute` - 执行多代理工作流 ⭐
+```
+your-project/
+├── feature-name/
+│   ├── docs/
+│   │   ├── requirements.md      # 📋 需求文档 (CMMI: RD)
+│   │   ├── design.md           # 🏗️ 设计文档 (CMMI: TS)
+│   │   ├── tasks.md            # 📅 任务管理 (CMMI: PI)
+│   │   ├── tests.md            # 🧪 测试计划 (CMMI: VER)
+│   │   └── implementation.md   # 💻 实现指南 (CMMI: TS)
+│   ├── src/                    # 源代码目录
+│   └── tests/                  # 测试目录
+```
 
-## 📖 文档
+## 🎯 使用场景
 
-- [使用指南](USAGE_GUIDE.md) - 详细的使用说明和示例
-- [代理规范](agent.md) - CMMI 标准代理角色定义
-- [示例配置](example-agents.md) - 代理配置示例
+- 🆕 **新功能开发**：从需求到实现的完整文档化
+- 🔄 **项目重构**：更新和标准化项目文档  
+- 👥 **团队协作**：统一文档格式和开发流程
+- 📊 **代码审查**：准备标准化的审查材料
 
-## 🏗️ CMMI 标准代理
+## 📚 文档
 
-系统提供6个标准的 CMMI 软件开发角色：
+详细文档请查看 [docs/](./docs/) 目录：
 
-1. **requirements-agent** - 需求分析 (RD)
-2. **design-agent** - 系统设计 (TS) 
-3. **coding-agent** - 代码实现 (PI)
-4. **tasks-agent** - 项目管理 (PP/PMC)
-5. **test-agent** - 测试验证 (VER/VAL)
-6. **spec-agent** - 技术规范 (PPQA)
+- 📖 [文档概览](./docs/DOCUMENTATION_OVERVIEW.md) - 所有文档的导航指南
+- 🚀 [文档自动生成指南](./docs/DOCUMENT_AUTO_LANDING_GUIDE.md) - 核心功能详细说明
+- 🔧 [其他项目使用指南](./docs/HOW_TO_USE_IN_OTHER_PROJECTS.md) - 跨项目使用方法
+- ⚙️ [安装配置指南](./docs/INSTALLATION_GUIDE.md) - 完整的安装流程
 
-## 💡 特性
+## 🧪 测试验证
 
-- ✅ 智能多代理工作流编排
-- ✅ CMMI 标准化流程
-- ✅ 支持多种 AI 模型 (GPT-4.1, GPT-5, Claude Sonnet 4)
-- ✅ 配置文件版本控制友好
-- ✅ TypeScript + Node.js 实现
-- ✅ 完整的测试覆盖
+```bash
+# 运行端到端测试
+node tests/test-document-auto-landing.mjs
+
+# 预期结果：🎉 All tests passed! (5/5 documents generated)
+```
+
+## 🛠️ 技术栈
+
+- **MCP Protocol** - Model Context Protocol 标准
+- **TypeScript** - 类型安全的开发语言
+- **VS Code** - 主要的集成开发环境
+- **Node.js** - 运行时环境
+- **YAML** - 代理配置格式
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
 
 ---
-*基于 CMMI 标准的专业多代理软件工程流水线* 🎯
+
+⭐ 如果这个项目对你有帮助，请给个星标支持！

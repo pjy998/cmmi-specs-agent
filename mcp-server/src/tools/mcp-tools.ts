@@ -27,8 +27,7 @@ const CreateAgentSchema = {
     model: {
       type: 'string',
       enum: ['gpt-4.1', 'gpt-4.5', 'claude-sonnet-4'],
-      description: 'The AI model to use for this agent',
-      default: 'gpt-4.1'
+      description: 'The AI model to use for this agent'
     },
     systemPrompt: {
       type: 'string',
@@ -43,8 +42,7 @@ const CreateAgentSchema = {
     },
     project_path: {
       type: 'string',
-      description: 'Path where the agent configuration should be saved',
-      default: './project'
+      description: 'Path where the agent configuration should be saved'
     }
   },
   required: ['name', 'description']
@@ -116,8 +114,7 @@ const InitCmmiAgentsSchema = {
   properties: {
     project_path: {
       type: 'string',
-      description: 'Project path where CMMI agents should be created',
-      default: './project'
+      description: 'Project path where CMMI agents should be created'
     }
   }
 };
@@ -134,14 +131,12 @@ const ExecuteMultiAgentWorkflowSchema = {
     },
     project_path: {
       type: 'string',
-      description: 'Project path containing agent configurations',
-      default: './project'
+      description: 'Project path containing agent configurations'
     },
     execution_mode: {
       type: 'string',
       enum: ['sequential', 'parallel', 'smart'],
-      description: 'Execution mode for the workflow',
-      default: 'smart'
+      description: 'Execution mode for the workflow'
     },
     selected_agents: {
       type: 'array',
@@ -152,13 +147,11 @@ const ExecuteMultiAgentWorkflowSchema = {
     },
     context_sharing: {
       type: 'boolean',
-      description: 'Whether agents should share context between steps',
-      default: true
+      description: 'Whether agents should share context between steps'
     },
     max_iterations: {
       type: 'number',
-      description: 'Maximum number of iterations for the workflow',
-      default: 10
+      description: 'Maximum number of iterations for the workflow'
     }
   },
   required: ['task_content']
