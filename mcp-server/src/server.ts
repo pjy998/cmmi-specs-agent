@@ -50,6 +50,9 @@ class MultiAgentOrchestratorServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      
+      // Log every tool call request
+      logger.info(`🔧 Tool call received: ${name}`, { args });
 
       try {
         let result: any;
@@ -85,7 +88,7 @@ class MultiAgentOrchestratorServer {
         }
 
         // Format the response according to MCP protocol
-        return {
+        const response = {
           content: [
             {
               type: 'text' as const,
@@ -93,6 +96,14 @@ class MultiAgentOrchestratorServer {
             }
           ]
         };
+        
+        // Log successful tool execution
+        logger.info(`✅ Tool executed successfully: ${name}`, { 
+          success: true,
+          resultSize: JSON.stringify(result).length 
+        });
+        
+        return response;
 
       } catch (error) {
         logger.error(`Tool execution error for ${name}:`, error);
@@ -129,18 +140,20 @@ class MultiAgentOrchestratorServer {
     if (process.env['DEBUG_MCP']) {
       logger.info('🚀 Starting Copilot Multi-Agent Orchestrator MCP Server');
       logger.info('📋 Available tools:');
-      logger.info('  • create_agent - Create a new AI agent with specified capabilities');
-      logger.info('  • list_agents - List all available agents and their capabilities'); 
-      logger.info('  • create_execution_plan - Create an execution plan for a complex task');
-      logger.info('  • execute_plan - Execute a previously created execution plan');
-      logger.info('  • get_execution_status - Get the status of a running or completed execution');
-      logger.info('  • list_executions - List all executions with their status');
-      logger.info('  • cancel_execution - Cancel a running execution');
-      logger.info('  • get_agent_metrics - Get performance metrics for agents');
-      logger.info('  • configure_orchestrator - Configure orchestrator settings');
+      logger.info('  • agent_create - Create a new AI agent with specific capabilities');
+      logger.info('  • agent_list - List all available agents and their capabilities'); 
+      logger.info('  • task_analyze - Analyze a task and recommend required agents and complexity');
+      logger.info('  • config_validate - Validate agent configuration files for correctness');
+      logger.info('  • cmmi_init - Initialize standard CMMI agents for software development');
+      logger.info('  • workflow_execute - Execute a multi-agent workflow with intelligent orchestration');
     }
     
     await this.server.connect(transport);
+    
+    // Send ready notification to client (MCP protocol requirement)
+    this.server.notification({
+      method: 'notifications/ready'
+    });
     
     if (process.env['DEBUG_MCP']) {
       logger.info('✅ Server connected and ready for requests');
