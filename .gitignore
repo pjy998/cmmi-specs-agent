@@ -1,6 +1,7 @@
 # Tests directory and generated test files
-tests/
-test-results/
+test-output/
+test-backup/
+tests/*output/
 *.test.log
 
 # Dependencies

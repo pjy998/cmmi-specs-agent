@@ -71,6 +71,10 @@ class MultiAgentOrchestratorServer {
             result = await AdvancedToolHandlers.analyzeTask(args);
             break;
 
+          case 'smart_agent_generator':
+            result = await AdvancedToolHandlers.smartAgentGenerator(args);
+            break;
+
           case 'config_validate':
             result = await AdvancedToolHandlers.validateAgentConfigs(args);
             break;
@@ -81,6 +85,10 @@ class MultiAgentOrchestratorServer {
 
           case 'workflow_execute':
             result = await AdvancedToolHandlers.executeMultiAgentWorkflow(args);
+            break;
+
+          case 'intelligent_translate':
+            result = await ToolHandlers.intelligentTranslate(args);
             break;
 
           default:
@@ -143,6 +151,7 @@ class MultiAgentOrchestratorServer {
       logger.info('  • agent_create - Create a new AI agent with specific capabilities');
       logger.info('  • agent_list - List all available agents and their capabilities'); 
       logger.info('  • task_analyze - Analyze a task and recommend required agents and complexity');
+      logger.info('  • smart_agent_generator - Intelligently generate VS Code agents based on task analysis');
       logger.info('  • config_validate - Validate agent configuration files for correctness');
       logger.info('  • cmmi_init - Initialize standard CMMI agents for software development');
       logger.info('  • workflow_execute - Execute a multi-agent workflow with intelligent orchestration');

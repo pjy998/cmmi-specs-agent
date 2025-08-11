@@ -2,24 +2,30 @@
 
 ## 🎯 项目简介
 
-CMMI Specs Agent 是一个智能化的多代理工作流系统，基于 MCP (Model Context Protocol) 实现，能够自动生成完整的CMMI标准软件开发文档集，包括需求、设计、任务、测试和实现指南。
+CMMI Specs Agent 是一个智能化的多代理工作流系统，基于 MCP (Model Context Protocol) 实现，集成了GPT-4.1智能翻译和动态代理生成功能，能够自动生成完整的CMMI标准软件开发文档集，支持中英文双语言文档生成。
 
 ## 📖 核心文档
 
-### 1. 🚀 快速开始和使用
+### 1. 📋 需求和规划
+
+- **[REQUIREMENTS_PLANNING.md](./REQUIREMENTS_PLANNING.md)** - 系统需求规划和功能规格文档
+- **[SYSTEM_CAPABILITIES.md](./SYSTEM_CAPABILITIES.md)** - 系统核心能力和技术特性说明
+
+### 2. 🚀 快速开始和使用
 
 - **[DOCUMENT_AUTO_LANDING_GUIDE.md](./DOCUMENT_AUTO_LANDING_GUIDE.md)** - 文档自动生成功能详细指南
 - **[HOW_TO_USE_IN_OTHER_PROJECTS.md](./HOW_TO_USE_IN_OTHER_PROJECTS.md)** - 在其他项目中使用本工具的完整指南
 - **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** - 详细的工作流执行和配置指南
 
-### 2. 🔧 安装配置
+### 3. 🔧 安装配置
 
 - **[INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md)** - VS Code和MCP服务器的完整安装指南
 
-### 3. 📁 项目信息和架构
+### 4. 🏗️ 架构和技术
 
 - **[PROJECT_DETAILS.md](./PROJECT_DETAILS.md)** - 详细的项目说明和技术规格
 - **[ARCHITECTURE_GUIDE.md](./ARCHITECTURE_GUIDE.md)** - 项目架构和技术实施指南
+- **[INTELLIGENT_TRANSLATION_DESIGN.md](./INTELLIGENT_TRANSLATION_DESIGN.md)** - 智能翻译系统设计和实现
 - **[ITERATION_COMPLETION_REPORT.md](./ITERATION_COMPLETION_REPORT.md)** - 功能迭代完成报告和成果总结
 
 ## 🏗️ 项目架构
@@ -27,7 +33,51 @@ CMMI Specs Agent 是一个智能化的多代理工作流系统，基于 MCP (Mod
 ```text
 cmmi-specs-agent/
 ├── docs/                          # 📚 项目文档
-│   ├── DOCUMENT_AUTO_LANDING_GUIDE.md      # 文档自动生成指南
+│   ├── REQUIREMENTS_PLANNING.md         # 系统需求规划
+│   ├── SYSTEM_CAPABILITIES.md          # 系统核心能力
+│   ├── INTELLIGENT_TRANSLATION_DESIGN.md # 智能翻译系统设计
+│   ├── DOCUMENT_AUTO_LANDING_GUIDE.md  # 文档自动生成指南
+│   ├── ARCHITECTURE_GUIDE.md           # 项目架构指南
+│   └── ...
+├── mcp-server/                    # 🖥️ MCP服务器核心
+│   ├── src/
+│   │   ├── server.ts                    # MCP服务器主程序
+│   │   ├── config/agent-generator.ts    # 智能代理生成器
+│   │   ├── utils/intelligent-translation.ts # 智能翻译服务
+│   │   ├── tools/                       # MCP工具集合
+│   │   └── types/                       # TypeScript类型定义
+│   └── package.json
+├── agents/                        # 🤖 静态代理配置
+│   ├── requirements-agent.yaml         # 需求分析代理
+│   ├── design-agent.yaml              # 设计架构代理
+│   └── ...
+└── tests/                         # 🧪 测试套件
+    ├── test-smart-agents.js           # 智能代理测试
+    ├── run-all-tests.js              # 完整测试套件
+    └── ...
+```
+
+## 🛠️ 核心功能特性
+
+### 1. 智能翻译系统
+- **GPT-4.1驱动**: 基于最新AI模型的上下文感知翻译
+- **技术术语映射**: 100+专业术语的中英文对照
+- **文档结构保持**: 翻译过程中保持Markdown格式完整性
+- **双向翻译**: 支持中英文互译和自动语言检测
+
+### 2. 智能代理生成器
+- **动态配置生成**: 根据任务自动创建专业代理配置
+- **VS Code集成**: 生成 `.copilot/agents` 兼容的配置文件
+- **智能模型分配**: 自动选择最适合的AI模型(GPT-4.1/Claude-Sonnet-4)
+- **复杂度分析**: 自动评估任务复杂度和工期估算
+
+### 3. CMMI文档生成
+- **5种标准文档**: 需求、设计、任务、测试、实现指南
+- **CMMI过程域标识**: 每个文档包含正确的过程域标记
+- **多代理协作**: 5个专业代理分工协作生成文档
+- **标准项目结构**: 自动创建符合软件工程规范的目录结构
+
+## 🔧 MCP工具集
 │   ├── HOW_TO_USE_IN_OTHER_PROJECTS.md     # 跨项目使用指南  
 │   ├── USAGE_GUIDE.md                      # 详细使用指南
 │   ├── INSTALLATION_GUIDE.md               # 安装配置指南

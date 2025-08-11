@@ -7,11 +7,85 @@ import { TaskAnalyzer } from '../utils/task-analyzer.js';
 import { I18n } from '../utils/i18n.js';
 import { logger } from '../utils/logger.js';
 import { FileOperations, DocumentTemplates } from '../utils/file-operations.js';
+import { IntelligentTranslationService, TranslationRequest, Language } from '../utils/intelligent-translation.js';
+import { AgentGenerator } from '../config/agent-generator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AdvancedToolHandlers {
+  /**
+   * Smart Agent Generator - 智能生成VS Code代理配置
+   */
+  static async smartAgentGenerator(args: any): Promise<any> {
+    try {
+      const { 
+        task_content, 
+        project_path = process.cwd(),
+        generation_mode = 'smart'
+      } = args;
+
+      if (!task_content) {
+        throw new Error('task_content is required');
+      }
+
+      // 自动检测语言
+      I18n.autoSetLanguage(task_content);
+      logger.info(`Language detected: ${I18n.getLanguage()}`);
+
+      const generator = new AgentGenerator();
+      const result = await generator.generateAgentConfigs(task_content, project_path);
+
+      // 确保.copilot/agents目录存在
+      const agentsDir = path.join(project_path, '.copilot', 'agents');
+      if (!fs.existsSync(agentsDir)) {
+        fs.mkdirSync(agentsDir, { recursive: true });
+        logger.info(`Created VS Code agents directory: ${agentsDir}`);
+      }
+
+      // 生成agent配置文件
+      const createdAgents = [];
+      for (const [agentName, config] of Object.entries(result.configs)) {
+        const agentPath = path.join(agentsDir, `${agentName}.yaml`);
+        
+        try {
+          fs.writeFileSync(agentPath, config.yaml_content, 'utf8');
+          createdAgents.push({
+            name: agentName,
+            path: agentPath,
+            role: config.role,
+            model: config.model,
+            capabilities: config.capabilities
+          });
+          logger.info(`Created agent: ${agentPath}`);
+        } catch (error) {
+          logger.error(`Failed to create agent ${agentName}:`, error);
+        }
+      }
+
+      return {
+        success: true,
+        message: I18n.getLanguage() === 'zh' 
+          ? `智能代理生成成功: ${createdAgents.length} 个代理已创建`
+          : `Smart agents generated successfully: ${createdAgents.length} agents created`,
+        task_analysis: result.analysis,
+        execution_plan: result.executionPlan,
+        created_agents: createdAgents,
+        agents_directory: agentsDir,
+        generation_mode,
+        language: I18n.getLanguage()
+      };
+
+    } catch (error) {
+      logger.error('Smart agent generation failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        language: I18n.getLanguage()
+      };
+    }
+  }
+
   /**
    * 分析任务复杂度和推荐代理 (支持国际化)
    */
@@ -409,6 +483,43 @@ instructions: |-
   }
 
   /**
+   * 智能翻译文档内容
+   */
+  private static async translateDocumentContent(
+    content: string, 
+    documentType: 'requirements' | 'design' | 'tasks' | 'tests' | 'implementation',
+    taskLanguage: Language
+  ): Promise<string> {
+    try {
+      // 如果任务语言是中文，则将英文模板翻译为中文
+      if (taskLanguage === 'zh') {
+        const translationService = IntelligentTranslationService.getInstance();
+        
+        const request: TranslationRequest = {
+          content,
+          sourceLanguage: 'en' as Language,
+          targetLanguage: 'zh' as Language,
+          context: {
+            domain: 'technical',
+            documentType: documentType
+          }
+        };
+
+        const result = await translationService.translate(request);
+        logger.info(`Document translated: ${documentType} (EN -> ZH)`);
+        return result.translatedContent;
+      }
+      
+      // 如果任务语言是英文，保持原文
+      return content;
+    } catch (error) {
+      logger.error(`Translation failed for ${documentType}:`, error);
+      // 翻译失败时返回原文
+      return content;
+    }
+  }
+
+  /**
    * 执行多代理工作流 - 系统核心功能
    */
   static async executeMultiAgentWorkflow(args: any): Promise<any> {
@@ -425,6 +536,10 @@ instructions: |-
       if (!task_content) {
         throw new Error('task_content is required');
       }
+
+      // 自动检测并设置语言
+      I18n.autoSetLanguage(task_content);
+      logger.info(`Language detected and set to: ${I18n.getLanguage()}`);
 
       const executionId = uuidv4();
       
@@ -454,7 +569,9 @@ instructions: |-
       }
 
       // 2. 检查代理配置是否存在
-      const agentsDir = path.join(project_path, 'agents');
+      // 代理配置在项目根目录，而不是在任务输出目录
+      const projectRoot = process.cwd();
+      const agentsDir = path.join(projectRoot, 'agents');
       const availableAgents = [];
       
       if (fs.existsSync(agentsDir)) {
@@ -523,17 +640,41 @@ instructions: |-
   }
 
   /**
-   * 从任务内容中提取特征名称
+   * 从任务内容中提取特征名称 - 支持中文
    */
   private static extractFeatureName(taskContent: string): string {
-    // 简单的特征名称提取逻辑
-    const words = taskContent.toLowerCase()
+    // 优先提取英文关键词
+    const englishWords = taskContent.toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2)
-      .slice(0, 3);
+      .filter(word => word.length > 2);
     
-    return words.join('-') || 'feature';
+    if (englishWords.length > 0) {
+      return englishWords.slice(0, 3).join('-');
+    }
+    
+    // 如果没有英文词，则处理中文
+    // 移除标点符号，保留中文字符
+    const cleanText = taskContent.replace(/[^\u4e00-\u9fff\w\s]/g, '');
+    
+    // 中文任务的简化处理
+    if (/[\u4e00-\u9fff]/.test(cleanText)) {
+      // 提取关键词：认证、系统、JWT等
+      const keywords = [];
+      if (cleanText.includes('认证') || cleanText.includes('登录') || cleanText.includes('用户')) {
+        keywords.push('user-auth');
+      }
+      if (cleanText.includes('JWT') || cleanText.includes('jwt')) {
+        keywords.push('jwt');
+      }
+      if (cleanText.includes('系统')) {
+        keywords.push('system');
+      }
+      
+      return keywords.length > 0 ? keywords.join('-') : 'feature';
+    }
+    
+    return 'feature';
   }
 
   /**
@@ -739,14 +880,22 @@ instructions: |-
       createTests: true
     });
 
-    const docsPath = path.join(projectPath, featureName, 'docs');
+    // 修正文档路径：docs/feature/ 而不是 feature/docs/
+    const docsPath = path.join(projectPath, 'docs', featureName);
     let outputMessage = '';
     let filePath = '';
+    
+    // 获取当前任务语言，用于智能翻译
+    const taskLanguage = I18n.getLanguage() as Language;
 
     switch (agentName) {
       case 'requirements-agent':
         filePath = path.join(docsPath, 'requirements.md');
-        const reqContent = DocumentTemplates.requirements(featureName, input);
+        let reqContent = DocumentTemplates.requirements(featureName, input);
+        
+        // 根据任务语言翻译文档内容
+        reqContent = await this.translateDocumentContent(reqContent, 'requirements', taskLanguage);
+        
         await FileOperations.createCmmiDocument(filePath, reqContent, 'RD');
         outputMessage = `Requirements document generated: ${filePath}`;
         break;
@@ -754,7 +903,11 @@ instructions: |-
       case 'design-agent':
         filePath = path.join(docsPath, 'design.md');
         const reqPath = path.join(docsPath, 'requirements.md');
-        const designContent = DocumentTemplates.design(featureName, reqPath);
+        let designContent = DocumentTemplates.design(featureName, reqPath);
+        
+        // 根据任务语言翻译文档内容
+        designContent = await this.translateDocumentContent(designContent, 'design', taskLanguage);
+        
         await FileOperations.createCmmiDocument(filePath, designContent, 'TS');
         outputMessage = `Design document generated: ${filePath}`;
         break;
@@ -762,7 +915,11 @@ instructions: |-
       case 'tasks-agent':
         filePath = path.join(docsPath, 'tasks.md');
         const designPath = path.join(docsPath, 'design.md');
-        const tasksContent = DocumentTemplates.tasks(featureName, designPath);
+        let tasksContent = DocumentTemplates.tasks(featureName, designPath);
+        
+        // 根据任务语言翻译文档内容
+        tasksContent = await this.translateDocumentContent(tasksContent, 'tasks', taskLanguage);
+        
         await FileOperations.createCmmiDocument(filePath, tasksContent, 'PI');
         outputMessage = `Task management document generated: ${filePath}`;
         break;
@@ -770,7 +927,11 @@ instructions: |-
       case 'test-agent':
         filePath = path.join(docsPath, 'tests.md');
         const tasksPath = path.join(docsPath, 'tasks.md');
-        const testsContent = DocumentTemplates.tests(featureName, tasksPath);
+        let testsContent = DocumentTemplates.tests(featureName, tasksPath);
+        
+        // 根据任务语言翻译文档内容
+        testsContent = await this.translateDocumentContent(testsContent, 'tests', taskLanguage);
+        
         await FileOperations.createCmmiDocument(filePath, testsContent, 'VER');
         outputMessage = `Test plan document generated: ${filePath}`;
         break;
@@ -778,42 +939,51 @@ instructions: |-
       case 'coding-agent':
         filePath = path.join(docsPath, 'implementation.md');
         const implDesignPath = path.join(docsPath, 'design.md');
-        const implContent = DocumentTemplates.implementation(featureName, implDesignPath);
+        let implContent = DocumentTemplates.implementation(featureName, implDesignPath);
+        
+        // 根据任务语言翻译文档内容
+        implContent = await this.translateDocumentContent(implContent, 'implementation', taskLanguage);
+        
         await FileOperations.createCmmiDocument(filePath, implContent, 'TS');
         outputMessage = `Implementation guide generated: ${filePath}`;
         break;
 
       case 'spec-agent':
-        // Generate all documents in sequence
+        // Generate all documents in sequence with translation support
         const allPaths = [];
         
         // Requirements
         const specReqPath = path.join(docsPath, 'requirements.md');
-        const specReqContent = DocumentTemplates.requirements(featureName, input);
+        let specReqContent = DocumentTemplates.requirements(featureName, input);
+        specReqContent = await this.translateDocumentContent(specReqContent, 'requirements', taskLanguage);
         await FileOperations.createCmmiDocument(specReqPath, specReqContent, 'RD');
         allPaths.push(specReqPath);
         
         // Design
         const specDesignPath = path.join(docsPath, 'design.md');
-        const specDesignContent = DocumentTemplates.design(featureName, specReqPath);
+        let specDesignContent = DocumentTemplates.design(featureName, specReqPath);
+        specDesignContent = await this.translateDocumentContent(specDesignContent, 'design', taskLanguage);
         await FileOperations.createCmmiDocument(specDesignPath, specDesignContent, 'TS');
         allPaths.push(specDesignPath);
         
         // Tasks
         const specTasksPath = path.join(docsPath, 'tasks.md');
-        const specTasksContent = DocumentTemplates.tasks(featureName, specDesignPath);
+        let specTasksContent = DocumentTemplates.tasks(featureName, specDesignPath);
+        specTasksContent = await this.translateDocumentContent(specTasksContent, 'tasks', taskLanguage);
         await FileOperations.createCmmiDocument(specTasksPath, specTasksContent, 'PI');
         allPaths.push(specTasksPath);
         
         // Tests
         const specTestsPath = path.join(docsPath, 'tests.md');
-        const specTestsContent = DocumentTemplates.tests(featureName, specTasksPath);
+        let specTestsContent = DocumentTemplates.tests(featureName, specTasksPath);
+        specTestsContent = await this.translateDocumentContent(specTestsContent, 'tests', taskLanguage);
         await FileOperations.createCmmiDocument(specTestsPath, specTestsContent, 'VER');
         allPaths.push(specTestsPath);
         
         // Implementation
         const specImplPath = path.join(docsPath, 'implementation.md');
-        const specImplContent = DocumentTemplates.implementation(featureName, specDesignPath);
+        let specImplContent = DocumentTemplates.implementation(featureName, specDesignPath);
+        specImplContent = await this.translateDocumentContent(specImplContent, 'implementation', taskLanguage);
         await FileOperations.createCmmiDocument(specImplPath, specImplContent, 'TS');
         allPaths.push(specImplPath);
         

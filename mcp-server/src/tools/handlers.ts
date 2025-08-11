@@ -7,6 +7,7 @@ import {
   AgentModel
 } from '../types/index.js';
 import { I18n } from '../utils/i18n.js';
+import { IntelligentTranslationService, TranslationRequest } from '../utils/intelligent-translation.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -141,6 +142,70 @@ ${tools.map((tool: string) => `  - ${tool}`).join('\n') || '[]'}
       return {
         success: false,
         error: error instanceof Error ? error.message : I18n.getError('execution_failed')
+      };
+    }
+  }
+
+  static async intelligentTranslate(params: any): Promise<any> {
+    try {
+      const {
+        content,
+        sourceLanguage,
+        targetLanguage,
+        documentType,
+        domain = 'technical'
+      } = params;
+
+      if (!content) {
+        return {
+          success: false,
+          error: 'Content is required for translation'
+        };
+      }
+
+      if (sourceLanguage === targetLanguage) {
+        return {
+          success: true,
+          result: {
+            translatedContent: content,
+            sourceLanguage,
+            targetLanguage,
+            skipped: true,
+            reason: 'Source and target languages are the same'
+          }
+        };
+      }
+
+      const translationService = IntelligentTranslationService.getInstance();
+      
+      const request: TranslationRequest = {
+        content,
+        sourceLanguage,
+        targetLanguage,
+        context: {
+          domain,
+          documentType,
+        }
+      };
+
+      const result = await translationService.translate(request);
+
+      return {
+        success: true,
+        result: {
+          translatedContent: result.translatedContent,
+          sourceLanguage: result.sourceLanguage,
+          targetLanguage: result.targetLanguage,
+          confidence: result.confidence,
+          preservedElements: result.preservedElements,
+          cached: false // TODO: 检测是否来自缓存
+        }
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Translation failed'
       };
     }
   }

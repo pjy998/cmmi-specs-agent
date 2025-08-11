@@ -158,6 +158,61 @@ const ExecuteMultiAgentWorkflowSchema = {
 };
 
 /**
+ * Schema for intelligent translation
+ */
+const SmartAgentGeneratorSchema = {
+  type: 'object',
+  properties: {
+    task_content: {
+      type: 'string',
+      description: 'Task description to analyze and generate appropriate agents for'
+    },
+    project_path: {
+      type: 'string',
+      description: 'Path to the VS Code workspace (optional, defaults to current workspace)'
+    },
+    generation_mode: {
+      type: 'string',
+      enum: ['smart', 'full'],
+      description: 'smart: generate only needed agents, full: generate complete CMMI set'
+    }
+  },
+  required: ['task_content']
+};
+
+const IntelligentTranslateSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'string',
+      description: 'The content to translate'
+    },
+    sourceLanguage: {
+      type: 'string',
+      enum: ['zh', 'en'],
+      description: 'Source language (zh for Chinese, en for English)'
+    },
+    targetLanguage: {
+      type: 'string',
+      enum: ['zh', 'en'],
+      description: 'Target language (zh for Chinese, en for English)'
+    },
+    documentType: {
+      type: 'string',
+      enum: ['requirements', 'design', 'tasks', 'tests', 'implementation'],
+      description: 'Type of document being translated'
+    },
+    domain: {
+      type: 'string',
+      enum: ['technical', 'business', 'general'],
+      description: 'Domain context for translation',
+      default: 'technical'
+    }
+  },
+  required: ['content', 'sourceLanguage', 'targetLanguage', 'documentType']
+} as const;
+
+/**
  * MCP Tools Array - Core tools with workflow execution
  */
 /**
@@ -185,6 +240,11 @@ export const mcpTools = [
     inputSchema: ValidateAgentConfigsSchema
   },
   {
+    name: 'smart_agent_generator',
+    description: 'Intelligently generate VS Code agents based on task analysis',
+    inputSchema: SmartAgentGeneratorSchema
+  },
+  {
     name: 'cmmi_init',
     description: 'Initialize standard CMMI agents for software development',
     inputSchema: InitCmmiAgentsSchema
@@ -193,8 +253,13 @@ export const mcpTools = [
     name: 'workflow_execute',
     description: 'Execute a multi-agent workflow with intelligent orchestration',
     inputSchema: ExecuteMultiAgentWorkflowSchema
+  },
+  {
+    name: 'intelligent_translate',
+    description: 'Translate content using GPT-4.1 with context awareness for technical documents',
+    inputSchema: IntelligentTranslateSchema
   }
 ];
 
 // Export validation schemas for use in handlers
-export { CreateAgentSchema, ListAgentsSchema, AnalyzeTaskSchema, ValidateAgentConfigsSchema, InitCmmiAgentsSchema, ExecuteMultiAgentWorkflowSchema };
+export { CreateAgentSchema, ListAgentsSchema, AnalyzeTaskSchema, ValidateAgentConfigsSchema, SmartAgentGeneratorSchema, InitCmmiAgentsSchema, ExecuteMultiAgentWorkflowSchema, IntelligentTranslateSchema };

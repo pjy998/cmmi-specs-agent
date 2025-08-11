@@ -77,6 +77,33 @@ export interface I18nMessages {
     documentation: string;
     specification: string;
   };
+  templates: {
+    design: {
+      architecture_overview: string;
+      system_architecture: string;
+      system_description: string;
+      presentation_layer: string;
+      business_layer: string;
+      data_layer: string;
+      database_layer: string;
+      technology_stack: string;
+      module_design: string;
+      user_management_module: string;
+      user_management_description: string;
+      core_components: string;
+      interface_design: string;
+      business_logic_module: string;
+      business_logic_description: string;
+      data_persistence_module: string;
+      data_persistence_description: string;
+      security_design: string;
+      authentication_mechanism: string;
+      permission_control: string;
+      performance_considerations: string;
+      optimization_strategy: string;
+      scalability_design: string;
+    };
+  };
 }
 
 const messages: Record<Language, I18nMessages> = {
@@ -152,6 +179,33 @@ const messages: Record<Language, I18nMessages> = {
       test_execution: '测试执行',
       documentation: '文档编写',
       specification: '规范制定'
+    },
+    templates: {
+      design: {
+        architecture_overview: '架构概述',
+        system_architecture: '系统架构',
+        system_description: '本系统采用分层架构设计，包含以下主要层次：',
+        presentation_layer: '用户界面层',
+        business_layer: '业务逻辑层',
+        data_layer: '数据访问层',
+        database_layer: '数据存储层',
+        technology_stack: '技术栈',
+        module_design: '模块设计',
+        user_management_module: '用户管理模块',
+        user_management_description: '处理用户注册、登录、权限管理',
+        core_components: '核心组件',
+        interface_design: '接口设计',
+        business_logic_module: '业务逻辑模块',
+        business_logic_description: '核心业务处理和数据管理',
+        data_persistence_module: '数据持久化模块',
+        data_persistence_description: '数据存储和检索',
+        security_design: '安全设计',
+        authentication_mechanism: '认证机制',
+        permission_control: '权限控制',
+        performance_considerations: '性能考虑',
+        optimization_strategy: '优化策略',
+        scalability_design: '扩展性设计'
+      }
     }
   },
   en: {
@@ -226,6 +280,33 @@ const messages: Record<Language, I18nMessages> = {
       test_execution: 'Test Execution',
       documentation: 'Documentation',
       specification: 'Specification'
+    },
+    templates: {
+      design: {
+        architecture_overview: 'Architecture Overview',
+        system_architecture: 'System Architecture',
+        system_description: 'This system adopts a layered architecture design with the following main layers:',
+        presentation_layer: 'Presentation Layer',
+        business_layer: 'Business Logic Layer',
+        data_layer: 'Data Access Layer',
+        database_layer: 'Database Layer',
+        technology_stack: 'Technology Stack',
+        module_design: 'Module Design',
+        user_management_module: 'User Management Module',
+        user_management_description: 'Handles user registration, login, and permission management',
+        core_components: 'Core Components',
+        interface_design: 'Interface Design',
+        business_logic_module: 'Business Logic Module',
+        business_logic_description: 'Core business processing and data management',
+        data_persistence_module: 'Data Persistence Module',
+        data_persistence_description: 'Data storage and retrieval',
+        security_design: 'Security Design',
+        authentication_mechanism: 'Authentication Mechanism',
+        permission_control: 'Permission Control',
+        performance_considerations: 'Performance Considerations',
+        optimization_strategy: 'Optimization Strategy',
+        scalability_design: 'Scalability Design'
+      }
     }
   }
 };
@@ -280,6 +361,14 @@ export class I18n {
   
   static getCapability(key: keyof I18nMessages['capabilities']): string {
     return messages[this.currentLanguage].capabilities[key];
+  }
+  
+  static getTemplate(section: keyof I18nMessages['templates'], key: string): string {
+    return (messages[this.currentLanguage].templates[section] as any)[key] || key;
+  }
+  
+  static getDesignTemplate(key: keyof I18nMessages['templates']['design']): string {
+    return messages[this.currentLanguage].templates.design[key];
   }
   
   // 格式化消息
