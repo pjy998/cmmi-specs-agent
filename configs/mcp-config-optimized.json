@@ -14,10 +14,10 @@
                         ],
                         "type": "stdio"
                 },
-                "cmmi-specs-agent": {
+                "cmmi-specs-agent-optimized": {
                         "command": "node",
                         "args": [
-                                "/Users/pengjiebin/Documents/GitHub/cmmi-specs-agent/mcp-server/dist/server.js"
+                                "/Users/pengjiebin/Documents/GitHub/cmmi-specs-agent/mcp-server/dist/server-optimized.js"
                         ],
                         "type": "stdio",
                         "env": {

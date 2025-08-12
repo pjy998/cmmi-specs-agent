@@ -14,6 +14,7 @@ import {
 import { mcpTools } from './tools/mcp-tools.js';
 import { ToolHandlers } from './tools/handlers.js';
 import { AdvancedToolHandlers } from './tools/advanced-handlers.js';
+import { EnhancedToolHandlers } from './tools/enhanced-handlers.js';
 import { logger } from './utils/logger.js';
 
 /**
@@ -54,41 +55,65 @@ class MultiAgentOrchestratorServer {
       // Log every tool call request
       logger.info(`🔧 Tool call received: ${name}`, { args });
 
+      // Ensure args is always an object
+      const safeArgs = args || {};
+
       try {
         let result: any;
 
         switch (name) {
           case 'agent_create':
-            result = await ToolHandlers.createAgent(args);
+            result = await ToolHandlers.createAgent(safeArgs);
             break;
 
           case 'agent_list':
-            result = await ToolHandlers.listAgents(args);
+            result = await ToolHandlers.listAgents(safeArgs);
             break;
 
           // Advanced tools
           case 'task_analyze':
-            result = await AdvancedToolHandlers.analyzeTask(args);
+            result = await AdvancedToolHandlers.analyzeTask(safeArgs);
             break;
 
           case 'smart_agent_generator':
-            result = await AdvancedToolHandlers.smartAgentGenerator(args);
+            result = await AdvancedToolHandlers.smartAgentGenerator(safeArgs);
             break;
 
           case 'config_validate':
-            result = await AdvancedToolHandlers.validateAgentConfigs(args);
+            result = await AdvancedToolHandlers.validateAgentConfigs(safeArgs);
             break;
 
           case 'cmmi_init':
-            result = await AdvancedToolHandlers.initCmmiAgents(args);
+            result = await AdvancedToolHandlers.initCmmiAgents(safeArgs);
             break;
 
           case 'workflow_execute':
-            result = await AdvancedToolHandlers.executeMultiAgentWorkflow(args);
+            result = await AdvancedToolHandlers.executeMultiAgentWorkflow(safeArgs);
             break;
 
           case 'intelligent_translate':
-            result = await ToolHandlers.intelligentTranslate(args);
+            result = await ToolHandlers.intelligentTranslate(safeArgs);
+            break;
+
+          // Enhanced tools
+          case 'project_generate':
+            result = await EnhancedToolHandlers.generateProject(safeArgs);
+            break;
+
+          case 'quality_analyze':
+            result = await EnhancedToolHandlers.analyzeQuality(safeArgs);
+            break;
+
+          case 'model_schedule':
+            result = await EnhancedToolHandlers.scheduleModel(safeArgs);
+            break;
+
+          case 'monitoring_status':
+            result = await EnhancedToolHandlers.getMonitoringStatus(safeArgs);
+            break;
+
+          case 'system_diagnosis':
+            result = await EnhancedToolHandlers.diagnoseSystem(safeArgs);
             break;
 
           default:
@@ -148,13 +173,22 @@ class MultiAgentOrchestratorServer {
     if (process.env['DEBUG_MCP']) {
       logger.info('🚀 Starting Copilot Multi-Agent Orchestrator MCP Server');
       logger.info('📋 Available tools:');
+      logger.info('  Basic Tools:');
       logger.info('  • agent_create - Create a new AI agent with specific capabilities');
       logger.info('  • agent_list - List all available agents and their capabilities'); 
+      logger.info('  • intelligent_translate - Translate content using GPT-4.1 with context awareness');
+      logger.info('  Advanced Tools:');
       logger.info('  • task_analyze - Analyze a task and recommend required agents and complexity');
       logger.info('  • smart_agent_generator - Intelligently generate VS Code agents based on task analysis');
       logger.info('  • config_validate - Validate agent configuration files for correctness');
       logger.info('  • cmmi_init - Initialize standard CMMI agents for software development');
       logger.info('  • workflow_execute - Execute a multi-agent workflow with intelligent orchestration');
+      logger.info('  Enhanced Tools:');
+      logger.info('  • project_generate - Generate a new project structure with documentation and code');
+      logger.info('  • quality_analyze - Perform quality analysis on project code and documentation');
+      logger.info('  • model_schedule - Schedule and manage AI model access for agents');
+      logger.info('  • monitoring_status - Get system monitoring status and metrics');
+      logger.info('  • system_diagnosis - Perform comprehensive system diagnosis and health checks');
     }
     
     await this.server.connect(transport);
