@@ -12,10 +12,8 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { mcpTools } from './tools/mcp-tools.js';
-import { ToolRegistry } from './core/tool-registry.js';
-import { BasicToolRouter } from './routers/basic-tool-router.js';
-import { AdvancedToolRouter } from './routers/advanced-tool-router.js';
-import { ErrorHandler } from './core/error-handler.js';
+import { ToolHandlers } from './tools/handlers.js';
+import { AdvancedToolHandlers } from './tools/advanced-handlers.js';
 import { logger } from './utils/logger.js';
 
 /**
