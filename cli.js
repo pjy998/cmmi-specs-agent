@@ -115,7 +115,7 @@ async function startServer() {
   // log('blue', '🚀 启动MCP服务器...');
   try {
     // 直接启动内置的server.js，不依赖mcp-server子目录
-    await runCommand('node', [join(__dirname, 'dist/server.js')]);
+    await runCommand('node', [join(__dirname, 'server.js')]);
   } catch (error) {
     // 只在错误时输出到stderr，不影响stdout的MCP协议通信
     console.error(`❌ 服务器启动失败: ${error.message}`);

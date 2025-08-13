@@ -45,9 +45,10 @@ export class UnifiedToolHandlers {
     try {
       const fs = await import('fs');
       const path = await import('path');
+      const projectPath = args['project_path'] as string;
 
       // 使用智能目录查找
-      const agentsDir = this.findAgentsDirectory();
+      const agentsDir = this.findAgentsDirectory(projectPath);
       
       if (!fs.existsSync(agentsDir)) {
         return {
@@ -140,13 +141,14 @@ export class UnifiedToolHandlers {
     const description = args['description'] as string;
     const capabilities = args['capabilities'] as string[] || [];
     const model = args['model'] as string || 'gpt-4.1';
+    const projectPath = args['project_path'] as string;
 
     if (!name) {
       throw new Error('Agent name is required');
     }
 
-    // 智能查找agents目录
-    const agentsDir = this.findAgentsDirectory();
+    // 智能查找agents目录，考虑项目路径
+    const agentsDir = this.findAgentsDirectory(projectPath);
     if (!fs.existsSync(agentsDir)) {
       fs.mkdirSync(agentsDir, { recursive: true });
     }
@@ -216,7 +218,13 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   /**
    * 智能查找agents目录
    */
-  private static findAgentsDirectory(): string {
+  private static findAgentsDirectory(projectPath?: string): string {
+    // 如果指定了项目路径，优先在项目路径中查找
+    if (projectPath) {
+      const projectAgentsDir = path.join(projectPath, 'agents');
+      return projectAgentsDir; // 直接返回项目路径下的agents目录，如果不存在会自动创建
+    }
+
     // 首先尝试当前目录
     let agentsDir = path.join(process.cwd(), 'agents');
     if (fs.existsSync(agentsDir)) {
@@ -306,6 +314,7 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   private static async generateSmartAgents(args: Record<string, unknown>): Promise<any> {
     const taskContent = args['task_content'] as string;
     const generationMode = args['generation_mode'] as string || 'smart';
+    const projectPath = args['project_path'] as string;
 
     if (!taskContent) {
       throw new Error('Task content is required for smart agent generation');
@@ -323,11 +332,12 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
             name: agentSpec.name,
             description: agentSpec.description,
             capabilities: agentSpec.capabilities,
-            model: agentSpec.model || 'gpt-4.1'
+            model: agentSpec.model || 'gpt-4.1',
+            project_path: projectPath
           });
           agentsToGenerate.push(result.agent);
         } catch (error: any) {
-          logger.warn(`Failed to create agent ${agentSpec.name}: ${error?.message || error}`);
+          logger.warn(`Failed to create agent ${agentSpec.name}: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
     } else if (generationMode === 'full') {
@@ -418,21 +428,68 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   /**
    * 初始化CMMI代理集
    */
-  private static async initCMMIAgents(_args: Record<string, unknown>): Promise<any> {
+  private static async initCMMIAgents(args: Record<string, unknown>): Promise<any> {
+    const projectPath = args['project_path'] as string;
+    
     const standardAgents = [
-      'requirements-agent',
-      'design-agent', 
-      'coding-agent',
-      'test-agent',
-      'tasks-agent',
-      'spec-agent'
+      {
+        name: 'requirements-agent',
+        description: '需求分析和需求管理专家',
+        capabilities: ['需求收集', '需求分析', '需求验证', '需求跟踪']
+      },
+      {
+        name: 'design-agent',
+        description: '系统设计和架构专家',
+        capabilities: ['架构设计', '系统设计', '接口设计', '数据库设计']
+      },
+      {
+        name: 'coding-agent', 
+        description: '代码开发和实现专家',
+        capabilities: ['代码编写', '代码审查', '重构优化', '技术实现']
+      },
+      {
+        name: 'test-agent',
+        description: '测试和质量保证专家',
+        capabilities: ['测试设计', '测试执行', '缺陷管理', '质量评估']
+      },
+      {
+        name: 'tasks-agent',
+        description: '任务管理和项目协调专家',
+        capabilities: ['任务规划', '进度跟踪', '资源分配', '风险管理']
+      },
+      {
+        name: 'spec-agent',
+        description: '规范和文档专家',
+        capabilities: ['文档编写', '规范制定', '标准审查', '模板制作']
+      }
     ];
+
+    const createdAgents = [];
+    for (const agentSpec of standardAgents) {
+      try {
+        const result = await this.createAgent({
+          name: agentSpec.name,
+          description: agentSpec.description,
+          capabilities: agentSpec.capabilities,
+          model: 'gpt-4.1',
+          project_path: projectPath
+        });
+        
+        if (result.success) {
+          createdAgents.push(agentSpec.name);
+        }
+      } catch (error) {
+        logger.warn(`Failed to create agent ${agentSpec.name}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
 
     return {
       success: true,
       action: 'init_cmmi',
-      initialized_agents: standardAgents,
-      message: 'CMMI agent initialization completed',
+      initialized_agents: createdAgents,
+      created_files: createdAgents.map(name => `${name}.yaml`),
+      agents_directory: projectPath ? path.join(projectPath, 'agents') : this.findAgentsDirectory(),
+      message: `CMMI agent initialization completed. Created ${createdAgents.length}/${standardAgents.length} agents`,
       timestamp: new Date().toISOString()
     };
   }

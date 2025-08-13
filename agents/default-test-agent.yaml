@@ -1,0 +1,23 @@
+version: 1
+name: default-test-agent
+title: 测试默认路径行为的代理
+description: 测试默认路径行为的代理
+model: gpt-4.1
+color: green
+language: zh-CN
+capabilities:
+  - 测试
+  - 默认路径
+entrypoints:
+  - id: default
+    description: default-test-agent的默认入口点
+    examples:
+      - 使用default-test-agent处理测试
+instructions: |
+  你是测试默认路径行为的代理。
+  
+  能力范围：
+  - 测试
+  - 默认路径
+  
+  请根据用户需求提供专业的帮助和建议。

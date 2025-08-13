@@ -10,6 +10,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListRootsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { mcpTools } from './tools/tools.js';
 import { UnifiedToolHandlers } from './tools/handlers.js';
@@ -20,6 +21,7 @@ import { logger } from './utils/logger.js';
  */
 class OptimizedMultiAgentOrchestratorServer {
   private server: Server;
+  private clientRoots: string[] = []; // 存储客户端提供的根路径
 
   constructor() {
     this.server = new Server(
@@ -30,6 +32,9 @@ class OptimizedMultiAgentOrchestratorServer {
       {
         capabilities: {
           tools: {},
+          roots: {
+            listChanged: true
+          }
         },
       }
     );
@@ -39,6 +44,35 @@ class OptimizedMultiAgentOrchestratorServer {
   }
 
   private setupToolHandlers(): void {
+    // Handle roots/list requests
+    this.server.setRequestHandler(ListRootsRequestSchema, async () => {
+      try {
+        // 如果有缓存的roots，返回它们
+        if (this.clientRoots.length > 0) {
+          return {
+            roots: this.clientRoots.map(rootPath => ({
+              uri: `file://${rootPath}`,
+              name: `Workspace: ${rootPath.split('/').pop() || rootPath}`
+            }))
+          };
+        }
+
+        // 如果没有缓存的roots，尝试获取当前工作目录
+        const currentDir = process.cwd();
+        return {
+          roots: [
+            {
+              uri: `file://${currentDir}`,
+              name: `Current Directory: ${currentDir.split('/').pop() || currentDir}`
+            }
+          ]
+        };
+      } catch (error) {
+        logger.error('Error handling roots/list request:', error);
+        return { roots: [] };
+      }
+    });
+
     // Register all optimized MCP tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -55,6 +89,15 @@ class OptimizedMultiAgentOrchestratorServer {
 
       // Ensure args is always an object
       const safeArgs = args || {};
+
+      // 如果工具调用没有提供project_path，尝试使用客户端根路径
+      if (!safeArgs.project_path) {
+        const defaultPath = this.getDefaultProjectPath();
+        if (defaultPath !== process.cwd()) {
+          safeArgs.project_path = defaultPath;
+          logger.info(`🎯 Auto-detected project path from client workspace: ${safeArgs.project_path}`);
+        }
+      }
 
       try {
         let result: any;
@@ -97,6 +140,20 @@ class OptimizedMultiAgentOrchestratorServer {
           // System diagnosis
           case 'system_diagnosis':
             result = await UnifiedToolHandlers.diagnoseSystem(safeArgs);
+            break;
+
+          // Special tool to set workspace roots (for testing)
+          case '_set_roots':
+            if (safeArgs.roots && Array.isArray(safeArgs.roots)) {
+              this.updateClientRoots(safeArgs.roots);
+              result = {
+                success: true,
+                message: `Updated client roots to: ${safeArgs.roots.join(', ')}`,
+                roots: safeArgs.roots
+              };
+            } else {
+              throw new Error('Invalid roots parameter');
+            }
             break;
 
           default:
@@ -146,6 +203,24 @@ class OptimizedMultiAgentOrchestratorServer {
       logger.error('Unhandled rejection in optimized server at:', promise, 'reason:', reason);
       process.exit(1);
     });
+  }
+
+  /**
+   * 获取默认的项目路径，优先使用客户端根路径
+   */
+  private getDefaultProjectPath(): string {
+    if (this.clientRoots.length > 0) {
+      return this.clientRoots[0];
+    }
+    return process.cwd();
+  }
+
+  /**
+   * 更新客户端根路径（可以在将来从roots/list_changed通知中调用）
+   */
+  public updateClientRoots(roots: string[]): void {
+    this.clientRoots = roots;
+    logger.info(`🎯 Updated client roots: ${roots.join(', ')}`);
   }
 
   async start(): Promise<void> {

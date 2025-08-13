@@ -45,11 +45,19 @@ npx cmmi-specs-mcp@latest install-vscode
 - 智能任务分析和代理推荐
 - 端到端工作流自动化
 
-⚡ **真正的NPX支持**
+⚡ **真正的NPX支持 & VS Code智能集成**
 
 - 无需本地安装，真正的"npx即用"
+- 🎯 **智能工作区检测** - 自动获取VS Code工作区路径，无需手动指定项目路径
 - 统一包管理，自动版本更新
 - 跨平台兼容性
+
+🔧 **最新修复 (v0.1.4)**
+
+- ✅ 修复了project_path参数处理问题
+- ✅ 实现MCP Roots协议支持，自动检测VS Code工作区
+- ✅ 改进了CMMI代理初始化功能，实际创建代理文件
+- ✅ 增强了多项目隔离和路径处理逻辑
 
 ## 🛠️ 项目结构
 
@@ -109,6 +117,30 @@ npx cmmi-specs-mcp@latest start          # 启动MCP服务器（VS Code调用）
 npx cmmi-specs-mcp@latest validate       # 验证配置
 npx cmmi-specs-mcp@latest test           # 运行测试
 ```
+
+## 🎯 智能工作区集成
+
+**零配置，自动检测VS Code工作区路径！**
+
+CMMI Specs Agent通过MCP Roots协议自动获取VS Code的工作区路径，无需手动指定`project_path`参数：
+
+```text
+# 在VS Code中打开任何项目文件夹，例如：
+# /Users/username/my-awesome-project
+
+# 然后在Copilot Chat中直接使用：
+@cmmi 创建一个需求分析代理
+
+# 系统自动：
+✅ 检测工作区：/Users/username/my-awesome-project  
+✅ 创建代理到：/Users/username/my-awesome-project/agents/requirements-agent.yaml
+✅ 所有操作都在正确的项目上下文中执行
+```
+
+**智能路径优先级：**
+1. 🥇 **明确指定的路径** - 如果工具调用中指定了`project_path`
+2. 🥈 **VS Code工作区路径** - 自动从VS Code获取的工作区根目录  
+3. 🥉 **当前目录** - 回退到MCP服务器的工作目录
 
 ## 💡 在VS Code中使用
 

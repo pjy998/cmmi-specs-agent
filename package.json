@@ -1,12 +1,12 @@
 {
   "name": "cmmi-specs-mcp",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "基于MCP协议的CMMI规范智能代理系统，实现VS Code Copilot Chat集成与多语言文档生成",
   "type": "module",
   "main": "dist/server.js",
   "bin": {
-    "cmmi-specs-mcp": "./dist/cli.js",
-    "cmmi-mcp": "./dist/cli.js"
+    "cmmi-specs-mcp": "dist/cli.js",
+    "cmmi-mcp": "dist/cli.js"
   },
   "scripts": {
     "build": "npm run build:server && npm run build:cli",
@@ -36,7 +36,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pjy998/cmmi-specs-agent.git"
+    "url": "git+https://github.com/pjy998/cmmi-specs-agent.git"
   },
   "homepage": "https://github.com/pjy998/cmmi-specs-agent#readme",
   "bugs": {

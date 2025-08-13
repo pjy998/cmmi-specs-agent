@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cmmi-specs-mcp": {
+      "command": "npx",
+      "args": ["cmmi-specs-mcp", "start"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
