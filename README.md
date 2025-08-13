@@ -1,31 +1,43 @@
 # 🚀 CMMI Specs Agent
 
-> 基于MCP协议的优化版智能代理系统，实现Copilot Chat集成与多语言CMMI文档生成
+> 基于MCP协议的CMMI规范智能代理系统，真正的"npx即用"体验
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-007ACC?logo=visual-studio-code&logoColor=white)](https://code.visualstudio.com/)
+[![npm](https://img.shields.io/npm/v/cmmi-specs-mcp)](https://www.npmjs.com/package/cmmi-specs-mcp)
 
-基于 **MCP (Model Context Protocol)** 的优化版智能代理系统，通过VS Code Copilot Chat集成，提供符合CMMI Level 3标准的文档生成和工作流自动化。
+基于 **MCP (Model Context Protocol)** 的智能代理系统，通过VS Code Copilot Chat集成，提供符合CMMI Level 3标准的文档生成和工作流自动化。
+
+## 🎯 一键安装和使用
+
+```bash
+# 🚀 一键安装配置 - 真正的npx即用！
+npx cmmi-specs-mcp@latest install-vscode
+
+# 重启VS Code后，在Copilot Chat中使用：
+# @cmmi 创建一个新的需求分析代理
+# @cmmi 分析这个任务的复杂度
+```
 
 ## ✨ 核心特性
 
-🎯 **8个优化MCP工具**
+🎯 **8个智能MCP工具**
 
-- 统一代理管理 (agent_manage)
-- 智能任务分析 (task_analyze)
-- 工作流执行 (workflow_execute)
-- 智能翻译 (intelligent_translate)
-- 项目配置 (config_validate)
-- 质量分析 (quality_analyze)
-- 模型调度 (model_schedule)
-- 系统诊断 (system_diagnosis)
+- 🤖 **代理管理** (agent_manage) - 智能创建和管理CMMI代理
+- 📊 **任务分析** (task_analyze) - 分析任务复杂度和推荐代理
+- 🔄 **工作流执行** (workflow_execute) - 多代理协作执行
+- 🌐 **智能翻译** (intelligent_translate) - 技术文档专用翻译
+- ✅ **配置验证** (config_validate) - 项目配置和YAML验证
+- 🔍 **质量分析** (quality_analyze) - 代码和文档质量评估
+- ⚡ **模型调度** (model_schedule) - AI模型访问调度
+- 🏥 **系统诊断** (system_diagnosis) - 系统状态监控
 
 🌐 **智能多语言文档生成**
 
-- 通过MCP协议调用GPT-4.1模型
-- 中英双语文档生成，技术文档专用优化
-- 内置上下文感知翻译引擎
+- 基于GPT-4.1的上下文感知翻译
+- 中英双语技术文档生成
+- 专业术语一致性保证
 
 🤖 **专业CMMI代理系统**
 
@@ -33,99 +45,119 @@
 - 智能任务分析和代理推荐
 - 端到端工作流自动化
 
-⚡ **轻量级MCP架构**
+⚡ **真正的NPX支持**
 
-- 基于MCP 1.0协议标准
-- 完整的VS Code Copilot Chat集成
-- 统一错误处理和日志监控
+- 无需本地安装，真正的"npx即用"
+- 统一包管理，自动版本更新
+- 跨平台兼容性
 
 ## 🛠️ 项目结构
 
 ```text
-cmmi-specs-agent/
-├── mcp-server/                    # MCP服务器核心
-│   ├── src/
-│   │   ├── server.ts             # 主服务器入口 
-│   │   ├── tools/                # 8个优化MCP工具
-│   │   │   ├── tools.ts          # 工具定义和Schema
-│   │   │   ├── handlers.ts       # 统一工具处理器
-│   │   │   └── enhanced.ts       # 增强功能处理器
-│   │   ├── core/                 # 核心业务逻辑
-│   │   │   ├── agentManager.ts   # 代理管理器
-│   │   │   ├── taskAnalyzer.ts   # 任务分析器
-│   │   │   ├── workflowExecutor.ts # 工作流执行器
-│   │   │   └── multilingualEngine.ts # 多语言引擎
-│   │   ├── types/                # TypeScript类型定义
-│   │   └── utils/                # 工具函数
-│   └── package.json              # 依赖配置
-├── agents/                       # 6个CMMI代理配置
-├── docs/                         # 项目文档集
-├── tests/                        # 测试套件
-└── configs/                      # MCP配置文件
+cmmi-specs-mcp/                   # 统一包结构
+├── src/                          # MCP服务器源码
+│   ├── server.ts                # 主服务器入口 
+│   ├── tools/                   # 8个MCP工具实现
+│   │   ├── handlers.ts          # 统一工具处理器
+│   │   ├── enhanced.ts          # 增强功能处理器
+│   │   └── tools.ts            # 工具定义和Schema
+│   ├── core/                    # 核心业务逻辑
+│   │   ├── agentManager.ts      # 代理管理器
+│   │   ├── taskAnalyzer.ts      # 任务分析器
+│   │   ├── workflowExecutor.ts  # 工作流执行器
+│   │   └── multilingualEngine.ts # 多语言引擎
+│   ├── types/                   # TypeScript类型定义
+│   └── utils/                   # 工具函数
+├── dist/                        # 构建输出
+│   ├── server.js               # MCP服务器
+│   ├── cli.js                  # CLI工具
+│   └── agents/                 # Agent配置
+├── agents/                      # 6个CMMI代理配置源文件
+├── docs/                        # 项目文档集
+├── tests/                       # 测试套件
+├── configs/                     # MCP配置文件示例
+└── cli.js                       # CLI工具源文件
 ```
 
 ## 🚀 快速开始
 
-### 方式一：NPX 安装（推荐）
+### 🎯 一键安装（推荐）
 
-最简单的使用方式，无需克隆代码库
+真正的"npx即用"体验，无需克隆代码库
 
 ```bash
-# 直接安装 MCP 服务器
-npx cmmi-specs-agent install
+# 🚀 一键安装并配置VS Code
+npx cmmi-specs-mcp@latest install-vscode
 
-# 配置 VS Code
-npx cmmi-specs-agent install-vscode
-
-# 查看所有可用命令
-npx cmmi-specs-agent help
+# 重启VS Code，然后在Copilot Chat中使用：
+# @cmmi 帮我创建一个项目需求分析代理
 ```
 
-NPX 可用命令：
+### 📋 所有可用命令
 
 ```bash
 # 基础命令
-npx cmmi-specs-agent version        # 显示版本信息
-npx cmmi-specs-agent help           # 显示帮助信息
-npx cmmi-specs-agent config         # 显示配置信息
+npx cmmi-specs-mcp@latest version        # 显示版本信息
+npx cmmi-specs-mcp@latest help           # 显示帮助信息
+npx cmmi-specs-mcp@latest config         # 显示配置信息
 
-# 安装配置
-npx cmmi-specs-agent install        # 安装 MCP 服务器
-npx cmmi-specs-agent install-vscode # 配置 VS Code
+# 安装和配置
+npx cmmi-specs-mcp@latest install-vscode # 配置VS Code MCP集成
+npx cmmi-specs-mcp@latest start          # 启动MCP服务器（VS Code调用）
 
-# 运行管理
-npx cmmi-specs-agent start          # 启动 MCP 服务器
-npx cmmi-specs-agent build          # 构建项目
-npx cmmi-specs-agent test           # 运行测试
-npx cmmi-specs-agent validate       # 验证安装
-
-# 代理管理
-npx cmmi-specs-agent agent list     # 列出所有代理
-npx cmmi-specs-agent agent create   # 创建新代理（开发中）
-npx cmmi-specs-agent agent validate # 验证代理配置
+# 测试和验证
+npx cmmi-specs-mcp@latest validate       # 验证配置
+npx cmmi-specs-mcp@latest test           # 运行测试
 ```
 
-### 方式二：本地安装
+## 💡 在VS Code中使用
 
-```bash
-# 克隆项目
-git clone https://github.com/pjy998/cmmi-specs-agent.git
-cd cmmi-specs-agent
+安装完成后，重启VS Code，然后在Copilot Chat中使用CMMI工具：
 
-# 安装 MCP 服务器
-./install-mcp.sh
-
-# 配置 VS Code
-./install-vscode.sh
-```
-
-### 使用代理系统
-
-在VS Code中使用Copilot Chat调用智能代理：
+### 🤖 代理管理
 
 ```text
-# 代理管理
-@workspace 使用 agent_manage 创建新的需求分析代理
+# 创建新代理
+@cmmi 创建一个专门负责API设计的代理
+
+# 列出现有代理
+@cmmi 列出所有可用的CMMI代理
+
+# 智能生成代理
+@cmmi 为这个Web开发项目生成合适的代理配置
+```
+
+### 📊 任务分析
+
+```text
+# 分析任务复杂度
+@cmmi 分析这个功能开发任务的复杂度和所需代理
+
+# 推荐工作流
+@cmmi 为用户注册功能推荐完整的开发工作流
+```
+
+### 🔄 工作流执行
+
+```text
+# 执行多代理工作流
+@cmmi 使用需求、设计、编码代理来实现用户登录功能
+
+# 智能协作
+@cmmi 协调多个代理完成这个复杂的系统集成任务
+```
+
+### 🌐 智能翻译
+
+```text
+# 技术文档翻译
+@cmmi 将这个API文档翻译成中文，保持技术术语一致性
+
+# 双语文档生成
+@cmmi 生成中英双语的系统设计文档
+```
+
+## 🔧 本地开发（可选）
 
 # 任务分析
 @workspace 使用 task_analyze 分析"用户认证系统"的开发任务

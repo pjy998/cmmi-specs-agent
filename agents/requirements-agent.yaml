@@ -13,7 +13,7 @@ entrypoints:
     description: 从产品构想生成需求说明
     examples:
       - "为权限缓存优化生成需求说明"
-instructions: |-
+instructions: |
   # CMMI Level 3 需求开发专业代理 (Requirements Development Agent)
   
   ## 🎯 角色定义

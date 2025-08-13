@@ -13,7 +13,7 @@ entrypoints:
     description: 运行测试并生成报告
     examples:
       - "为权限缓存 feature 运行测试并生成报告"
-instructions: |-
+instructions: |
   # CMMI Level 3 验证和确认专业代理 (Verification & Validation Agent)
   
   ## 🎯 角色定义

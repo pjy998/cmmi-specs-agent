@@ -23,7 +23,8 @@ else
 fi
 
 # 检查MCP服务器构建
-MCP_SERVER_PATH="/Users/pengjiebin/Documents/GitHub/cmmi-specs-agent/mcp-server/dist/server.js"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MCP_SERVER_PATH="$PROJECT_ROOT/dist/server.js"
 if [ -f "$MCP_SERVER_PATH" ]; then
     echo "✅ MCP服务器已构建: $MCP_SERVER_PATH"
 else

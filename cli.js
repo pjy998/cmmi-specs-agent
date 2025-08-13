@@ -114,7 +114,8 @@ async function startServer() {
   // 在MCP模式下不输出任何日志，避免干扰VS Code的MCP协议解析
   // log('blue', '🚀 启动MCP服务器...');
   try {
-    await runCommand('node', [join(projectRoot, 'mcp-server/dist/server.js')]);
+    // 直接启动内置的server.js，不依赖mcp-server子目录
+    await runCommand('node', [join(__dirname, 'dist/server.js')]);
   } catch (error) {
     // 只在错误时输出到stderr，不影响stdout的MCP协议通信
     console.error(`❌ 服务器启动失败: ${error.message}`);

@@ -13,7 +13,7 @@ entrypoints:
     description: 从需求生成设计文档
     examples:
       - "为权限缓存优化生成系统设计"
-instructions: |-
+instructions: |
   # CMMI Level 3 技术解决方案专业代理 (Technical Solution Agent)
   
   ## 🎯 角色定义

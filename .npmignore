@@ -1,15 +1,67 @@
-# NPM ignore file - explicitly include dist/ for publication
-node_modules/
-.git/
-*.log
-.env
+# Development files
+src/
+tsconfig.json
+.eslintrc.js
+
+# Build artifacts
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
 .DS_Store
-tests/
-*.test.js
-*.spec.js
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
 coverage/
 .nyc_output/
 
-# Force include dist directories
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Environment variables file
+.env
+.env.test
+
+# Development and testing files
+tests/
+test/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Development documentation
+DEVELOPMENT.md
+CONTRIBUTING.md
+
+# Git files
+.git/
+.gitignore
+
+# Force include distribution
 !dist/
-!mcp-server/dist/

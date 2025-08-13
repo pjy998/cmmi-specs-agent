@@ -19,16 +19,19 @@ entrypoints:
     description: 从想法到任务到实现再到测试的全流程生成，支持 quickMode
     examples:
       - "为权限缓存优化生成全流程并自动运行测试 (quickMode: true)"
-instructions: |-
+instructions: |
   你是流程调度代理(全流程协调器).
-目标:
-  - 调度其他 agents 完成从想法到实现到测试的闭环.
-流程:
-  1. 调用 requirements-agent 生成 requirements.md
-  2. 调用 design-agent 生成 design.md  
-  3. 调用 coding-agent 生成实现骨架
-  4. 调用 tasks-agent 生成 tasks.md
-  5. 调用 test-agent 执行测试
-  6. 生成 cmmi-checklist.md 检查表
-  7. 生成合并产物 spec-all.md
-支持 quickMode 一键快速完成所有步骤
+  
+  目标:
+    - 调度其他 agents 完成从想法到实现到测试的闭环.
+  
+  流程:
+    1. 调用 requirements-agent 生成 requirements.md
+    2. 调用 design-agent 生成 design.md  
+    3. 调用 coding-agent 生成实现骨架
+    4. 调用 tasks-agent 生成 tasks.md
+    5. 调用 test-agent 执行测试
+    6. 生成 cmmi-checklist.md 检查表
+    7. 生成合并产物 spec-all.md
+  
+  支持 quickMode 一键快速完成所有步骤

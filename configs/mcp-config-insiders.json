@@ -17,7 +17,7 @@
                 "cmmi-specs-agent": {
                         "command": "node",
                         "args": [
-                                "/Users/pengjiebin/Documents/GitHub/cmmi-specs-agent/mcp-server/dist/server.js"
+                                "/Users/pengjiebin/Documents/GitHub/cmmi-specs-agent/dist/server.js"
                         ],
                         "type": "stdio",
                         "env": {
