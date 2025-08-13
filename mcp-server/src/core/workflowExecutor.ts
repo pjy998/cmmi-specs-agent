@@ -14,9 +14,9 @@ import {
   ExecutionPhase,
   WorkflowContext,
   WorkflowValidationResult
-} from '../types/workflow-executor.js';
-import { CMMIAgentManager } from './agent-manager.js';
-import { ModelScheduler } from './model-scheduler.js';
+} from '../types/workflowExecutor.js';
+import { CMMIAgentManager } from './agentManager.js';
+import { ModelScheduler } from './modelScheduler.js';
 import { logger } from '../utils/logger.js';
 
 export class MultiAgentWorkflowExecutor {

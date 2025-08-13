@@ -14,9 +14,9 @@ import {
   HealthCheck,
   AgentLifecycleEvent,
   MonitoringMetrics
-} from '../types/agent-manager.js';
-import { AgentRole, AIModel } from '../types/model-scheduler.js';
-import { ModelScheduler } from './model-scheduler.js';
+} from '../types/agentManager.js';
+import { AgentRole, AIModel } from '../types/modelScheduler.js';
+import { ModelScheduler } from './modelScheduler.js';
 import { logger } from '../utils/logger.js';
 
 export class CMMIAgentManager {

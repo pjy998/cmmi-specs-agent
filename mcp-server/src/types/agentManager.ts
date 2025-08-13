@@ -3,7 +3,7 @@
  * CMMI代理管理系统类型定义
  */
 
-import { AgentRole, AIModel } from './model-scheduler.js';
+import { AgentRole, AIModel } from './modelScheduler.js';
 
 export type AgentStatus = 
   | 'idle'          // 空闲

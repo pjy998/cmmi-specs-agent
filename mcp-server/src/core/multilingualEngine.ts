@@ -14,8 +14,8 @@ import {
   MultilingualEngineConfig,
   TerminologyGlossary,
   ContextAnalysis
-} from '../types/multilingual-engine.js';
-import { ModelScheduler } from './model-scheduler.js';
+} from '../types/multilingualEngine.js';
+import { ModelScheduler } from './modelScheduler.js';
 import { logger } from '../utils/logger.js';
 
 export class MultilingualDocumentEngine {

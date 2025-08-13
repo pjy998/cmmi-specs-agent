@@ -19,7 +19,7 @@ import {
   QualityThresholds,
   ComplianceStatus,
   QualityArtifact
-} from '../types/quality-assurance.js';
+} from '../types/qualityAssurance.js';
 
 /**
  * 质量保证系统

@@ -1,21 +1,27 @@
 /**
  * MCP Tools Definition for Copilot Multi-Agent Orchestrator
- * Simplified to 5 core tools for better maintainability
+ * 优化版本 - 合并重叠功能，保留8个核心工具
  */
 
 /**
- * Schema for creating agents
+ * Schema for unified agent management (合并 agent_create, smart_agent_generator, cmmi_init)
  */
-const CreateAgentSchema = {
+const AgentManageSchema = {
   type: 'object',
   properties: {
+    action: {
+      type: 'string',
+      enum: ['create', 'list', 'generate_smart', 'init_cmmi'],
+      description: 'Action to perform: create single agent, list agents, generate smart agents, or init CMMI agents'
+    },
+    // For single agent creation
     name: {
       type: 'string',
-      description: 'The name of the agent (unique identifier)'
+      description: 'The name of the agent (for create action)'
     },
     description: {
       type: 'string',
-      description: 'Brief description of the agent\'s role and purpose'
+      description: 'Brief description of the agent\'s role and purpose (for create action)'
     },
     capabilities: {
       type: 'array',
@@ -29,31 +35,7 @@ const CreateAgentSchema = {
       enum: ['gpt-4.1', 'gpt-4.5', 'claude-sonnet-4'],
       description: 'The AI model to use for this agent'
     },
-    systemPrompt: {
-      type: 'string',
-      description: 'Custom system prompt for the agent'
-    },
-    tools: {
-      type: 'array',
-      items: {
-        type: 'string'
-      },
-      description: 'List of tools this agent can use'
-    },
-    project_path: {
-      type: 'string',
-      description: 'Path where the agent configuration should be saved'
-    }
-  },
-  required: ['name', 'description']
-};
-
-/**
- * Schema for listing agents
- */
-const ListAgentsSchema = {
-  type: 'object',
-  properties: {
+    // For listing and filtering
     project_path: {
       type: 'string',
       description: 'Project path to scan for agent configurations'
@@ -61,14 +43,25 @@ const ListAgentsSchema = {
     filter_by_capability: {
       type: 'string',
       description: 'Filter agents by specific capability'
+    },
+    // For smart generation
+    task_content: {
+      type: 'string',
+      description: 'Task description to analyze and generate appropriate agents for (for generate_smart action)'
+    },
+    generation_mode: {
+      type: 'string',
+      enum: ['smart', 'full'],
+      description: 'smart: generate only needed agents, full: generate complete CMMI set'
     }
-  }
+  },
+  required: ['action']
 };
 
 /**
- * Schema for analyze_task tool
+ * Schema for task analysis
  */
-const AnalyzeTaskSchema = {
+const TaskAnalyzeSchema = {
   type: 'object',
   properties: {
     task_content: {
@@ -93,36 +86,9 @@ const AnalyzeTaskSchema = {
 };
 
 /**
- * Schema for validate_agent_configs tool
+ * Schema for workflow execution
  */
-const ValidateAgentConfigsSchema = {
-  type: 'object',
-  properties: {
-    config_path: {
-      type: 'string',
-      description: 'Path to directory containing agent configuration files'
-    }
-  },
-  required: ['config_path']
-};
-
-/**
- * Schema for init_cmmi_agents tool
- */
-const InitCmmiAgentsSchema = {
-  type: 'object',
-  properties: {
-    project_path: {
-      type: 'string',
-      description: 'Project path where CMMI agents should be created'
-    }
-  }
-};
-
-/**
- * Schema for execute_multi_agent_workflow tool
- */
-const ExecuteMultiAgentWorkflowSchema = {
+const WorkflowExecuteSchema = {
   type: 'object',
   properties: {
     task_content: {
@@ -160,26 +126,6 @@ const ExecuteMultiAgentWorkflowSchema = {
 /**
  * Schema for intelligent translation
  */
-const SmartAgentGeneratorSchema = {
-  type: 'object',
-  properties: {
-    task_content: {
-      type: 'string',
-      description: 'Task description to analyze and generate appropriate agents for'
-    },
-    project_path: {
-      type: 'string',
-      description: 'Path to the VS Code workspace (optional, defaults to current workspace)'
-    },
-    generation_mode: {
-      type: 'string',
-      enum: ['smart', 'full'],
-      description: 'smart: generate only needed agents, full: generate complete CMMI set'
-    }
-  },
-  required: ['task_content']
-};
-
 const IntelligentTranslateSchema = {
   type: 'object',
   properties: {
@@ -213,11 +159,17 @@ const IntelligentTranslateSchema = {
 } as const;
 
 /**
- * Schema for project generation
+ * Schema for project operations (合并 project_generate 和部分 workflow 功能)
  */
-const ProjectGenerateSchema = {
+const ProjectOpsSchema = {
   type: 'object',
   properties: {
+    action: {
+      type: 'string',
+      enum: ['generate', 'validate_config'],
+      description: 'Action: generate new project or validate configurations'
+    },
+    // For project generation
     project_name: {
       type: 'string',
       description: 'Name of the project to generate'
@@ -240,9 +192,14 @@ const ProjectGenerateSchema = {
     output_path: {
       type: 'string',
       description: 'Output path for generated project'
+    },
+    // For config validation
+    config_path: {
+      type: 'string',
+      description: 'Path to directory containing agent configuration files (for validate_config action)'
     }
   },
-  required: ['project_name', 'project_type']
+  required: ['action']
 } as const;
 
 /**
@@ -296,78 +253,54 @@ const ModelScheduleSchema = {
 } as const;
 
 /**
- * Schema for monitoring status
+ * Schema for unified system monitoring (合并 monitoring_status 和 system_diagnosis)
  */
-const MonitoringStatusSchema = {
+const SystemMonitorSchema = {
   type: 'object',
   properties: {
+    action: {
+      type: 'string',
+      enum: ['status', 'diagnosis'],
+      description: 'Action: get monitoring status or perform system diagnosis'
+    },
+    // For monitoring status
     metric_type: {
       type: 'string',
-      enum: ['system', 'application', 'business'],
-      description: 'Type of metrics to retrieve'
-    }
-  }
-} as const;
-
-/**
- * Schema for system diagnosis
- */
-const SystemDiagnosisSchema = {
-  type: 'object',
-  properties: {
+      enum: ['system', 'application', 'business', 'all'],
+      description: 'Type of metrics to retrieve (for status action)'
+    },
+    // For system diagnosis
     check_type: {
       type: 'string',
       enum: ['quick', 'full', 'deep'],
-      description: 'Type of system diagnosis to perform'
+      description: 'Type of system diagnosis to perform (for diagnosis action)'
     },
     include_recommendations: {
       type: 'boolean',
-      description: 'Whether to include improvement recommendations'
+      description: 'Whether to include improvement recommendations (for diagnosis action)'
     }
-  }
+  },
+  required: ['action']
 } as const;
 
 /**
- * MCP Tools Array - Core tools with workflow execution
- */
-/**
- * MCP Tools Array - Optimized naming for better usability
+ * 优化后的MCP工具数组 - 8个核心工具
  */
 export const mcpTools = [
   {
-    name: 'agent_create',
-    description: 'Create a new AI agent with specific capabilities',
-    inputSchema: CreateAgentSchema
-  },
-  {
-    name: 'agent_list',
-    description: 'List all available agents and their capabilities',
-    inputSchema: ListAgentsSchema
+    name: 'agent_manage',
+    description: 'Unified agent management: create, list, generate smart agents, or initialize CMMI agents',
+    inputSchema: AgentManageSchema
   },
   {
     name: 'task_analyze',
     description: 'Analyze a task and recommend required agents and complexity',
-    inputSchema: AnalyzeTaskSchema
-  },
-  {
-    name: 'config_validate',
-    description: 'Validate agent configuration files for correctness',
-    inputSchema: ValidateAgentConfigsSchema
-  },
-  {
-    name: 'smart_agent_generator',
-    description: 'Intelligently generate VS Code agents based on task analysis',
-    inputSchema: SmartAgentGeneratorSchema
-  },
-  {
-    name: 'cmmi_init',
-    description: 'Initialize standard CMMI agents for software development',
-    inputSchema: InitCmmiAgentsSchema
+    inputSchema: TaskAnalyzeSchema
   },
   {
     name: 'workflow_execute',
     description: 'Execute a multi-agent workflow with intelligent orchestration',
-    inputSchema: ExecuteMultiAgentWorkflowSchema
+    inputSchema: WorkflowExecuteSchema
   },
   {
     name: 'intelligent_translate',
@@ -375,9 +308,9 @@ export const mcpTools = [
     inputSchema: IntelligentTranslateSchema
   },
   {
-    name: 'project_generate',
-    description: 'Generate a new project structure with documentation and code',
-    inputSchema: ProjectGenerateSchema
+    name: 'config_validate',
+    description: 'Project operations: generate new projects or validate configurations',
+    inputSchema: ProjectOpsSchema
   },
   {
     name: 'quality_analyze',
@@ -390,30 +323,20 @@ export const mcpTools = [
     inputSchema: ModelScheduleSchema
   },
   {
-    name: 'monitoring_status',
-    description: 'Get system monitoring status and metrics',
-    inputSchema: MonitoringStatusSchema
-  },
-  {
     name: 'system_diagnosis',
-    description: 'Perform comprehensive system diagnosis and health checks',
-    inputSchema: SystemDiagnosisSchema
+    description: 'Unified system monitoring: get status metrics or perform comprehensive diagnosis',
+    inputSchema: SystemMonitorSchema
   }
 ];
 
 // Export validation schemas for use in handlers
 export { 
-  CreateAgentSchema, 
-  ListAgentsSchema, 
-  AnalyzeTaskSchema, 
-  ValidateAgentConfigsSchema, 
-  SmartAgentGeneratorSchema, 
-  InitCmmiAgentsSchema, 
-  ExecuteMultiAgentWorkflowSchema, 
+  AgentManageSchema,
+  TaskAnalyzeSchema, 
+  WorkflowExecuteSchema, 
   IntelligentTranslateSchema,
-  ProjectGenerateSchema,
+  ProjectOpsSchema,
   QualityAnalyzeSchema,
   ModelScheduleSchema,
-  MonitoringStatusSchema,
-  SystemDiagnosisSchema
+  SystemMonitorSchema
 };

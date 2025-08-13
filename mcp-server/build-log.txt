@@ -1,0 +1,4 @@
+
+> copilot-multi-agent-orchestrator@1.0.0 build
+> tsc
+

@@ -17,6 +17,8 @@ build/
 # Logs
 logs/
 *.log
+combined.log
+error.log
 
 # IDE
 .vscode/
@@ -38,3 +40,14 @@ Thumbs.db
 # User configuration files
 mcp-config.json
 claude_desktop_config.json
+
+# Generated files and outputs
+*-output/
+*.test.js
+demo-*.js
+optimized-tools-test-report.json
+
+# Backup and refactor directories
+refactor-*/
+backup-*/
+english-*/

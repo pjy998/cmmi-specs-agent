@@ -12,7 +12,7 @@ import {
   TaskComplexityAnalysis,
   CopilotChatRequest,
   ModelSchedulerConfig
-} from '../types/model-scheduler.js';
+} from '../types/modelScheduler.js';
 
 export class ModelScheduler {
   private config: ModelSchedulerConfig;

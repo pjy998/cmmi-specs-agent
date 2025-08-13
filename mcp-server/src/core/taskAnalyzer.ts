@@ -18,7 +18,7 @@ import {
   RiskFactor,
   Milestone,
   AnalysisMetrics
-} from '../types/task-analyzer.js';
+} from '../types/taskAnalyzer.js';
 
 /**
  * 智能任务分析器

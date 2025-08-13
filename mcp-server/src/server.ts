@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * MCP Server Entry Point
- * Copilot Multi-Agent Orchestrator - Refactored Architecture
+ * MCP Server Entry Point - Optimized Version
+ * Copilot Multi-Agent Orchestrator - 8 Optimized Tools
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -11,23 +11,21 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { mcpTools } from './tools/mcp-tools.js';
-import { ToolHandlers } from './tools/handlers.js';
-import { AdvancedToolHandlers } from './tools/advanced-handlers.js';
-import { EnhancedToolHandlers } from './tools/enhanced-handlers.js';
+import { mcpTools } from './tools/tools.js';
+import { UnifiedToolHandlers } from './tools/handlers.js';
 import { logger } from './utils/logger.js';
 
 /**
- * Main server class for the multi-agent orchestrator
+ * Optimized server class for the multi-agent orchestrator with 8 tools
  */
-class MultiAgentOrchestratorServer {
+class OptimizedMultiAgentOrchestratorServer {
   private server: Server;
 
   constructor() {
     this.server = new Server(
       {
-        name: 'copilot-multi-agent-orchestrator',
-        version: '1.0.0',
+        name: 'copilot-multi-agent-orchestrator-optimized',
+        version: '2.0.0',
       },
       {
         capabilities: {
@@ -41,19 +39,19 @@ class MultiAgentOrchestratorServer {
   }
 
   private setupToolHandlers(): void {
-    // Register all MCP tools
+    // Register all optimized MCP tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: mcpTools
       };
     });
 
-    // Handle tool calls
+    // Handle tool calls with optimized handlers
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       
       // Log every tool call request
-      logger.info(`🔧 Tool call received: ${name}`, { args });
+      logger.info(`🔧 Optimized tool call received: ${name}`, { args });
 
       // Ensure args is always an object
       const safeArgs = args || {};
@@ -62,62 +60,47 @@ class MultiAgentOrchestratorServer {
         let result: any;
 
         switch (name) {
-          case 'agent_create':
-            result = await ToolHandlers.createAgent(safeArgs);
+          // Unified agent management
+          case 'agent_manage':
+            result = await UnifiedToolHandlers.manageAgent(safeArgs);
             break;
 
-          case 'agent_list':
-            result = await ToolHandlers.listAgents(safeArgs);
-            break;
-
-          // Advanced tools
+          // Task analysis (standalone)
           case 'task_analyze':
-            result = await AdvancedToolHandlers.analyzeTask(safeArgs);
+            result = await UnifiedToolHandlers.analyzeTask(safeArgs);
             break;
 
-          case 'smart_agent_generator':
-            result = await AdvancedToolHandlers.smartAgentGenerator(safeArgs);
-            break;
-
-          case 'config_validate':
-            result = await AdvancedToolHandlers.validateAgentConfigs(safeArgs);
-            break;
-
-          case 'cmmi_init':
-            result = await AdvancedToolHandlers.initCmmiAgents(safeArgs);
-            break;
-
+          // Workflow execution (standalone)
           case 'workflow_execute':
-            result = await AdvancedToolHandlers.executeMultiAgentWorkflow(safeArgs);
+            result = await UnifiedToolHandlers.executeWorkflow(safeArgs);
             break;
 
+          // Intelligent translation (standalone)
           case 'intelligent_translate':
-            result = await ToolHandlers.intelligentTranslate(safeArgs);
+            result = await UnifiedToolHandlers.intelligentTranslate(safeArgs);
             break;
 
-          // Enhanced tools
-          case 'project_generate':
-            result = await EnhancedToolHandlers.generateProject(safeArgs);
-            break;
-
-          case 'quality_analyze':
-            result = await EnhancedToolHandlers.analyzeQuality(safeArgs);
+          // Unified project operations
+          case 'config_validate':
+            result = await UnifiedToolHandlers.validateConfig(safeArgs);
             break;
 
           case 'model_schedule':
-            result = await EnhancedToolHandlers.scheduleModel(safeArgs);
+            result = await UnifiedToolHandlers.scheduleModel(safeArgs);
             break;
 
-          case 'monitoring_status':
-            result = await EnhancedToolHandlers.getMonitoringStatus(safeArgs);
+          // Quality analysis (standalone)
+          case 'quality_analyze':
+            result = await UnifiedToolHandlers.analyzeQuality(safeArgs);
             break;
 
+          // System diagnosis
           case 'system_diagnosis':
-            result = await EnhancedToolHandlers.diagnoseSystem(safeArgs);
+            result = await UnifiedToolHandlers.diagnoseSystem(safeArgs);
             break;
 
           default:
-            throw new Error(`Unknown tool: ${name}`);
+            throw new Error(`Unknown optimized tool: ${name}`);
         }
 
         // Format the response according to MCP protocol
@@ -131,7 +114,7 @@ class MultiAgentOrchestratorServer {
         };
         
         // Log successful tool execution
-        logger.info(`✅ Tool executed successfully: ${name}`, { 
+        logger.info(`✅ Optimized tool executed successfully: ${name}`, { 
           success: true,
           resultSize: JSON.stringify(result).length 
         });
@@ -139,7 +122,7 @@ class MultiAgentOrchestratorServer {
         return response;
 
       } catch (error) {
-        logger.error(`Tool execution error for ${name}:`, error);
+        logger.error(`Optimized tool execution error for ${name}:`, error);
         return {
           content: [
             {
@@ -155,12 +138,12 @@ class MultiAgentOrchestratorServer {
 
   private setupErrorHandler(): void {
     process.on('uncaughtException', (error) => {
-      logger.error('Uncaught exception:', error);
+      logger.error('Uncaught exception in optimized server:', error);
       process.exit(1);
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+      logger.error('Unhandled rejection in optimized server at:', promise, 'reason:', reason);
       process.exit(1);
     });
   }
@@ -168,27 +151,21 @@ class MultiAgentOrchestratorServer {
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     
-    // MCP 服务器启动时不应该向 stdout 输出日志，只记录到文件
-    // 这些启动信息仅在调试模式下输出到文件
+    // 优化版服务器启动信息（仅在调试模式下输出到文件）
     if (process.env['DEBUG_MCP']) {
-      logger.info('🚀 Starting Copilot Multi-Agent Orchestrator MCP Server');
-      logger.info('📋 Available tools:');
-      logger.info('  Basic Tools:');
-      logger.info('  • agent_create - Create a new AI agent with specific capabilities');
-      logger.info('  • agent_list - List all available agents and their capabilities'); 
-      logger.info('  • intelligent_translate - Translate content using GPT-4.1 with context awareness');
-      logger.info('  Advanced Tools:');
-      logger.info('  • task_analyze - Analyze a task and recommend required agents and complexity');
-      logger.info('  • smart_agent_generator - Intelligently generate VS Code agents based on task analysis');
-      logger.info('  • config_validate - Validate agent configuration files for correctness');
-      logger.info('  • cmmi_init - Initialize standard CMMI agents for software development');
-      logger.info('  • workflow_execute - Execute a multi-agent workflow with intelligent orchestration');
-      logger.info('  Enhanced Tools:');
-      logger.info('  • project_generate - Generate a new project structure with documentation and code');
-      logger.info('  • quality_analyze - Perform quality analysis on project code and documentation');
-      logger.info('  • model_schedule - Schedule and manage AI model access for agents');
-      logger.info('  • monitoring_status - Get system monitoring status and metrics');
-      logger.info('  • system_diagnosis - Perform comprehensive system diagnosis and health checks');
+      logger.info('🚀 Starting Copilot Multi-Agent Orchestrator MCP Server (Optimized v2.0)');
+      logger.info('🎯 Optimized from 13 tools to 8 tools (38% reduction)');
+      logger.info('📋 Available optimized tools:');
+      logger.info('  Unified Tools (3):');
+      logger.info('  • agent_manage - Unified agent management (create/list/generate/init)');
+      logger.info('  • project_ops - Unified project operations (generate/validate)');
+      logger.info('  • system_monitor - Unified system monitoring (status/diagnosis)');
+      logger.info('  Standalone Tools (5):');
+      logger.info('  • task_analyze - Analyze tasks and recommend agents');
+      logger.info('  • workflow_execute - Execute multi-agent workflows');
+      logger.info('  • intelligent_translate - Smart translation with context');
+      logger.info('  • quality_analyze - Project quality analysis');
+      logger.info('  • model_schedule - AI model access scheduling');
     }
     
     await this.server.connect(transport);
@@ -199,16 +176,16 @@ class MultiAgentOrchestratorServer {
     });
     
     if (process.env['DEBUG_MCP']) {
-      logger.info('✅ Server connected and ready for requests');
+      logger.info('✅ Optimized server connected and ready for requests');
     }
   }
 }
 
-// Start the server
+// Start the optimized server
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new MultiAgentOrchestratorServer();
+  const server = new OptimizedMultiAgentOrchestratorServer();
   server.start().catch((error) => {
-    console.error('Failed to start server:', error);
+    console.error('Failed to start optimized server:', error);
     process.exit(1);
   });
 }

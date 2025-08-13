@@ -6,13 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "build:optimized": "tsc && echo 'Optimized build completed'",
     "dev": "tsx watch src/server.ts",
-    "dev:optimized": "tsx watch src/server-optimized.ts",
     "start": "node dist/server.js",
-    "start:optimized": "node dist/server-optimized.js",
     "test": "jest",
-    "test:optimized": "node test-optimized-tools.js",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"
   },

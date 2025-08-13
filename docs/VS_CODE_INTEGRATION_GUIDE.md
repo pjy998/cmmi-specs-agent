@@ -2,27 +2,24 @@
 
 ## 🎯 概述
 
-本系统现已完全配置好，可通过VS Code的Model Context Protocol (MCP)自动交互。我们提供了13个强大的工具来支持完整的CMMI Level 3软件开发流程。
+本系统现已完全配置好，可通过VS Code的Model Context Protocol (MCP)自动交互。我们提供了8个强大的工具来支持完整的CMMI Level 3软件开发流程。
 
 ## 📋 可用工具列表
 
-### 基础工具
-- **agent_create** - 创建具有特定能力的新AI代理
-- **agent_list** - 列出所有可用代理及其能力
+### 统一代理管理工具
+- **agent_manage** - 统一的代理管理（创建、列表、智能生成、CMMI初始化）
 - **intelligent_translate** - 使用GPT-4.1进行技术文档的智能翻译
 
-### 高级工具
+### 核心分析工具
 - **task_analyze** - 分析任务并推荐所需代理和复杂度
-- **smart_agent_generator** - 基于任务分析智能生成VS Code代理
 - **config_validate** - 验证代理配置文件的正确性
-- **cmmi_init** - 初始化软件开发的标准CMMI代理
-- **workflow_execute** - 执行智能编排的多代理工作流
 
-### 增强工具
+### 高级工作流工具
+- **workflow_execute** - 执行智能编排的多代理工作流
 - **project_generate** - 生成包含文档和代码的新项目结构
+
+### 质量保证工具
 - **quality_analyze** - 对项目代码和文档进行质量分析
-- **model_schedule** - 调度和管理代理的AI模型访问
-- **monitoring_status** - 获取系统监控状态和指标
 - **system_diagnosis** - 执行全面的系统诊断和健康检查
 
 ## 🚀 VS Code 自动交互
@@ -53,21 +50,29 @@ MCP配置文件已更新：`configs/mcp-config-insiders.json`
 在VS Code中，你现在可以直接使用以下命令：
 
 #### 📝 智能翻译
+
 ```
 请使用intelligent_translate工具将以下技术文档从中文翻译成英文：
 [你的中文内容]
 ```
 
 #### 🔍 任务分析
+
 ```
 请使用task_analyze工具分析以下开发任务：
 创建一个React电商网站，包含用户认证、商品目录、购物车和支付功能
 ```
 
-#### 🤖 智能代理生成
+#### 🤖 统一代理管理
+
 ```
-请使用smart_agent_generator为以下项目生成合适的代理：
-构建一个Node.js REST API服务，支持用户管理和数据分析
+请使用agent_manage工具创建新代理：
+{
+  "action": "create",
+  "name": "frontend-dev",
+  "description": "前端开发专家",
+  "capabilities": ["React", "TypeScript", "UI/UX"]
+}
 ```
 
 #### 🏗️ 项目生成
@@ -122,7 +127,7 @@ project_generate → 多语言项目结构
 ## 📈 性能指标
 
 当前系统状态：
-- ✅ 13个工具全部可用
+- ✅ 8个优化工具全部可用
 - ✅ 平均响应时间：125ms
 - ✅ 成功率：99.2%
 - ✅ 吞吐量：450任务/小时

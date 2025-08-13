@@ -3,8 +3,8 @@
  * 多代理工作流执行器类型定义
  */
 
-import { AgentRole } from './model-scheduler.js';
-import { TaskPriority } from './agent-manager.js';
+import { AgentRole } from './modelScheduler.js';
+import { TaskPriority } from './agentManager.js';
 
 export type WorkflowExecutionMode = 
   | 'sequential'   // 串行执行

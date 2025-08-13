@@ -22,7 +22,7 @@ import {
   PrometheusConfig,
   GrafanaConfig,
   ProcessInfo
-} from '../types/monitoring-alerting.js';
+} from '../types/monitoring.js';
 
 /**
  * 监控报警系统
