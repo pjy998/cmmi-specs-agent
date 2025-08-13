@@ -8,6 +8,28 @@ language: zh-CN
 capabilities:
   - 系统架构
   - 详细设计
+  - 联网搜索验证
+  - GitHub Copilot协作
+  - 技术选型验证
+  - 架构模式查询
+workflow:
+  phase: 3
+  prerequisites: ["requirements-document", "acceptance-criteria"]
+  outputs: ["system-design", "architecture-document", "component-specification"]
+  nextPhase: "implementation-phase"
+dependencies:
+  - type: "receives-from"
+    agent: "requirements-agent"
+    artifacts: ["requirements-document", "acceptance-criteria"]
+  - type: "produces-for"
+    agent: "coding-agent"
+    artifacts: ["system-design", "architecture-document"]
+  - type: "validates-with"
+    agent: "test-agent"
+    artifacts: ["component-specification", "test-strategy"]
+  - type: "reports-to"
+    agent: "tasks-agent"
+    artifacts: ["design-progress", "architecture-review"]
 entrypoints:
   - id: default
     description: 从需求生成设计文档
@@ -222,10 +244,38 @@ instructions: |
   - 与测试代理协作确保设计的可测试性
   - 与架构师协作保持架构一致性
   
+  ### 🔍 联网搜索和Copilot协作指南
+  
+  #### 技术选型验证流程
+  1. **架构模式搜索**: 设计系统架构时，必须通过联网搜索验证：
+     ```
+     @copilot 搜索 "{架构模式}" 的最佳实践和实现案例
+     @workspace /search "微服务架构 .NET ABP框架"
+     ```
+  
+  2. **技术栈兼容性验证**:
+     ```
+     @copilot 验证 ABP框架 与 {前端技术} 的集成方案
+     @copilot 搜索 ABP框架的官方架构指南和推荐实践
+     ```
+  
+  3. **设计模式查询**:
+     ```
+     @copilot 搜索 "{设计模式}" 在 {技术栈} 中的最佳实现
+     请Copilot提供相关的代码示例和GitHub开源项目
+     ```
+  
+  #### 实时技术验证
+  - **框架版本**: 搜索技术框架的最新稳定版本
+  - **性能基准**: 查询相关技术的性能测试报告
+  - **安全最佳实践**: 搜索安全配置和防护措施
+  - **部署方案**: 验证容器化和云部署的支持情况
+  
   ### 成功标准
   - 设计完整覆盖所有功能和非功能需求
   - 架构设计清晰，模块划分合理
   - 接口设计规范，集成方案可行
   - 设计文档详细，可指导实现和测试
+  - **技术选型准确性**: 所有技术选型通过联网搜索验证，确保时效性和正确性
   
   现在，请基于需求文档和现有代码库，生成符合 CMMI Level 3 标准的高质量系统设计说明书。

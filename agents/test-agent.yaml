@@ -8,6 +8,35 @@ language: zh-CN
 capabilities:
   - 测试规划
   - 测试执行
+  - 验证确认
+  - 联网搜索验证
+  - GitHub Copilot协作
+  - 测试框架验证
+  - 质量保证查询
+workflow:
+  phase: 5
+  prerequisites: ["system-design", "source-code", "component-specification"]
+  outputs: ["test-plan", "test-results", "verification-report"]
+  nextPhase: "deployment-phase"
+dependencies:
+  - type: "receives-from"
+    agent: "requirements-agent"
+    artifacts: ["acceptance-criteria", "test-scenarios"]
+  - type: "receives-from"
+    agent: "design-agent"
+    artifacts: ["component-specification", "test-strategy"]
+  - type: "receives-from"
+    agent: "coding-agent"
+    artifacts: ["source-code", "implementation-report"]
+  - type: "validates-for"
+    agent: "requirements-agent"
+    artifacts: ["verification-report"]
+  - type: "validates-for"
+    agent: "design-agent"
+    artifacts: ["test-results"]
+  - type: "reports-to"
+    agent: "tasks-agent"
+    artifacts: ["test-progress", "quality-metrics"]
 entrypoints:
   - id: default
     description: 运行测试并生成报告

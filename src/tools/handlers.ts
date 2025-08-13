@@ -8,6 +8,8 @@ import * as path from 'path';
 import * as yaml from 'yaml';
 import { logger } from '../utils/logger.js';
 import { EnhancedToolHandlers } from './enhanced.js';
+import { AgentDiscoveryEngine, type AgentDiscoveryResult } from '../core/agentDiscoveryEngine.js';
+import { WorkflowOrchestrator } from '../core/workflowOrchestrator.js';
 
 export class UnifiedToolHandlers {
   
@@ -926,11 +928,11 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   }
 
   /**
-   * 真正的项目生成器
+   * 真正的项目生成器 - 集成智能化工作流编排
    */
   private static async generateRealProject(args: Record<string, unknown>): Promise<any> {
     try {
-      logger.info('🏗️ Generating real project structure');
+      logger.info('🏗️ 开始智能化项目生成流程...');
       
       const projectName = args['project_name'] as string;
       const projectType = args['project_type'] as string || 'web-app';
@@ -942,79 +944,96 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
         throw new Error('project_name is required for project generation');
       }
 
-      // 创建项目目录结构
-      const projectPath = path.resolve(outputPath);
-      
-      // 检查目录是否已存在
-      if (fs.existsSync(projectPath)) {
-        logger.warn(`⚠️ Directory already exists: ${projectPath}`);
-      } else {
-        fs.mkdirSync(projectPath, { recursive: true });
-      }
-
-      // 创建标准项目结构
-      const directories = [
-        'src',
-        'docs',
-        'tests',
-        'configs',
-        'agents',
-        'dist'
-      ];
-
-      directories.forEach(dir => {
-        const dirPath = path.join(projectPath, dir);
-        if (!fs.existsSync(dirPath)) {
-          fs.mkdirSync(dirPath, { recursive: true });
-        }
-      });
-
-      // 生成基础文件
-      const files = await this.generateProjectFiles(projectPath, {
-        projectName,
-        projectType,
-        techStack,
-        languages
-      });
-
-      // 生成默认CMMI代理配置
-      const agents = await this.generateDefaultAgents(path.join(projectPath, 'agents'));
-
-      // 分析项目复杂度和推荐工具
-      const projectAnalysis = this.analyzeProjectComplexity(projectType, techStack);
-
-      const result = {
-        success: true,
+      // 构建项目配置
+      const projectConfig = {
         project_name: projectName,
         project_type: projectType,
         tech_stack: techStack,
-        output_path: projectPath,
+        project_path: path.resolve(outputPath),
         languages: languages,
-        structure: {
-          directories: directories,
-          files_created: files.length,
-          agents_created: agents.length
-        },
-        project_analysis: projectAnalysis,
-        files_created: files,
-        agents_created: agents,
-        next_steps: [
-          `cd ${projectPath}`,
-          'npm install (if Node.js project)',
-          'Review generated CMMI agents in ./agents/',
-          'Customize project configuration in ./configs/',
-          'Start development with CMMI workflow support'
-        ],
-        generation_time: new Date().toISOString()
+        generated_at: new Date().toISOString()
       };
 
-      logger.info(`✅ Real project "${projectName}" generated at: ${projectPath}`);
-      return result;
+      // 创建项目目录
+      if (!fs.existsSync(outputPath)) {
+        fs.mkdirSync(outputPath, { recursive: true });
+        logger.info(`📁 创建项目目录: ${outputPath}`);
+      }
+
+      // 使用WorkflowOrchestrator执行智能化项目初始化
+      logger.info('🚀 启动智能化工作流编排...');
+      
+      const executionResult = await WorkflowOrchestrator.executeIntelligentProjectInitialization(
+        outputPath,
+        projectConfig
+      );
+
+      // 生成项目总结报告
+      const summaryReport = this.generateProjectSummary(executionResult, projectConfig);
+
+      return {
+        success: executionResult.success,
+        project_name: projectName,
+        project_path: outputPath,
+        project_type: projectType,
+        tech_stack: techStack,
+        workflow_execution: {
+          total_phases: executionResult.execution_summary.total_phases,
+          successful_phases: executionResult.execution_summary.successful_phases,
+          failed_phases: executionResult.execution_summary.failed_phases,
+          execution_time_ms: executionResult.execution_summary.execution_time_ms,
+          cmmi_compliance: executionResult.quality_metrics.cmmi_compliance
+        },
+        generated_artifacts: executionResult.generated_artifacts,
+        quality_metrics: executionResult.quality_metrics,
+        recommendations: executionResult.execution_summary.recommendations,
+        summary_report: summaryReport
+      };
 
     } catch (error) {
-      logger.error('❌ Project generation failed:', error);
-      throw new Error(`Project generation failed: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error('❌ 智能化项目生成失败:', error);
+      throw error;
     }
+  }
+
+  /**
+   * 生成项目总结报告
+   */
+  private static generateProjectSummary(executionResult: any, projectConfig: any): string {
+    const { execution_summary, quality_metrics } = executionResult;
+    
+    return `# 🎯 ${projectConfig.project_name} 项目生成报告
+
+## � 执行总结
+- **项目类型**: ${projectConfig.project_type}
+- **技术栈**: ${projectConfig.tech_stack}
+- **CMMI合规等级**: ${execution_summary.cmmi_compliance_level}
+- **执行时间**: ${Math.round(execution_summary.execution_time_ms / 1000)}秒
+
+## 🔄 工作流执行状态
+- **总阶段数**: ${execution_summary.total_phases}
+- **成功阶段**: ${execution_summary.successful_phases}
+- **失败阶段**: ${execution_summary.failed_phases}
+- **跳过阶段**: ${execution_summary.skipped_phases || 0}
+
+## 📋 生成的工件
+- **文档数量**: ${executionResult.generated_artifacts.filter((a: any) => a.type === 'document').length}
+- **代码文件**: ${executionResult.generated_artifacts.filter((a: any) => a.type === 'code').length}
+- **配置文件**: ${executionResult.generated_artifacts.filter((a: any) => a.type === 'config').length}
+- **测试文件**: ${executionResult.generated_artifacts.filter((a: any) => a.type === 'test').length}
+
+## 🎯 质量指标
+- **整体质量分数**: ${Math.round(quality_metrics.overall_quality_score)}%
+- **CMMI合规分数**: ${Math.round(quality_metrics.cmmi_compliance_score)}%
+- **流程遵循度**: ${Math.round(quality_metrics.process_adherence)}%
+- **可追溯性覆盖率**: ${Math.round(quality_metrics.traceability_coverage)}%
+
+## 💡 改进建议
+${execution_summary.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
+
+---
+*生成时间: ${new Date().toLocaleString()}*
+`;
   }
 
   /**
@@ -1094,83 +1113,564 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   }
 
   /**
-   * 生成默认CMMI代理
+   * 生成默认CMMI代理 - 使用完整的CMMI L3标准模板
    */
   private static async generateDefaultAgents(agentsPath: string): Promise<string[]> {
     const createdAgents: string[] = [];
 
-    const defaultAgents = [
-      {
-        name: 'requirements-analyzer',
-        version: '1.0.0',
-        model: 'gpt-4.1',
-        capabilities: ['requirements_analysis', 'stakeholder_mapping', 'acceptance_criteria'],
-        instructions: `你是一个需求分析专家，负责：
-1. 分析和整理项目需求
-2. 识别利益相关者需求
-3. 定义验收标准
-4. 需求可行性评估
-5. 需求变更管理
-
-始终确保需求清晰、可测试、可实现。`
-      },
-      {
-        name: 'system-designer',
-        version: '1.0.0',
-        model: 'gpt-4.1',
-        capabilities: ['system_design', 'architecture_planning', 'technical_solution'],
-        instructions: `你是一个系统设计专家，负责：
-1. 系统架构设计
-2. 技术方案选型
-3. 模块划分和接口设计
-4. 性能和安全考虑
-5. 技术风险评估
-
-确保设计方案可扩展、可维护、符合最佳实践。`
-      },
-      {
-        name: 'implementation-developer',
-        version: '1.0.0',
-        model: 'gpt-4.1',
-        capabilities: ['code_implementation', 'best_practices', 'code_review'],
-        instructions: `你是一个开发实现专家，负责：
-1. 编写高质量代码
-2. 代码审查和重构
-3. 最佳实践应用
-4. 单元测试编写
-5. 技术债务管理
-
-始终遵循编码规范，编写可读、可维护的代码。`
-      },
-      {
-        name: 'quality-tester',
-        version: '1.0.0',
-        model: 'gpt-4.1',
-        capabilities: ['test_planning', 'test_execution', 'quality_assurance'],
-        instructions: `你是一个质量保证专家，负责：
-1. 测试策略制定
-2. 测试用例设计
-3. 自动化测试
-4. 缺陷管理
-5. 质量度量
-
-确保产品质量符合要求，测试覆盖充分。`
-      }
+    // 从项目的agents目录复制完整的CMMI L3标准模板
+    const templateAgents = [
+      'requirements-agent.yaml',
+      'design-agent.yaml', 
+      'coding-agent.yaml',
+      'test-agent.yaml',
+      'tasks-agent.yaml',
+      'spec-agent.yaml'
     ];
 
+    const projectRoot = path.resolve(__dirname, '../../agents');
+    
+    // 如果模板文件存在，复制完整配置；否则使用简化版本
+    const defaultAgents = [];
+    
+    for (const templateFile of templateAgents) {
+      const templatePath = path.join(projectRoot, templateFile);
+      if (fs.existsSync(templatePath)) {
+        try {
+          const templateContent = fs.readFileSync(templatePath, 'utf-8');
+          const templateYaml = yaml.parse(templateContent);
+          
+          // 调整名称以匹配生成需求（移除-agent后缀，添加-analyzer等）
+          const agentName = templateFile.replace('.yaml', '').replace('-agent', '');
+          const generatedName = this.mapAgentNameForGeneration(agentName);
+          
+          templateYaml.name = generatedName;
+          defaultAgents.push(templateYaml);
+        } catch (error) {
+          logger.warn(`Failed to load template ${templateFile}, using fallback`);
+          defaultAgents.push(this.getFallbackAgentConfig(templateFile));
+        }
+      } else {
+        defaultAgents.push(this.getFallbackAgentConfig(templateFile));
+      }
+    }
+
     try {
+      logger.info('📝 Starting CMMI agents generation with enhanced templates');
+      logger.info(`📁 Target directory: ${agentsPath}`);
+      logger.info(`🎯 Template source: ${projectRoot}`);
+      
       for (const agent of defaultAgents) {
+        logger.info(`🤖 Creating agent: ${agent.name} (version ${agent.version})`);
+        logger.info(`🔧 Capabilities: ${agent.capabilities.join(', ')}`);
+        
         const agentContent = yaml.stringify(agent);
         const agentFile = path.join(agentsPath, `${agent.name}.yaml`);
         fs.writeFileSync(agentFile, agentContent);
         createdAgents.push(`${agent.name}.yaml`);
+        
+        logger.info(`✅ Successfully created: ${agent.name}.yaml`);
+        
+        // 验证生成的文件
+        if (fs.existsSync(agentFile)) {
+          const fileSize = fs.statSync(agentFile).size;
+          logger.info(`📄 File size: ${fileSize} bytes`);
+        }
       }
+      
+      logger.info(`🎉 Agent generation completed! Created ${createdAgents.length} agents:`);
+      createdAgents.forEach(agent => logger.info(`   ✓ ${agent}`));
+      
     } catch (error) {
       logger.error('❌ Agent generation failed:', error);
+      if (error instanceof Error) {
+        logger.error(`📋 Error details: ${error.message}`);
+        logger.error(`📍 Stack trace: ${error.stack}`);
+      }
       throw error;
     }
 
     return createdAgents;
+  }
+
+  /**
+   * 验证技术栈信息 - 提供基本的技术栈验证和建议
+   */
+  private static validateTechStack(techStack: string): any {
+    const stackLower = techStack.toLowerCase();
+    const validation = {
+      techStack,
+      isValid: true,
+      warnings: [] as string[],
+      suggestions: [] as string[],
+      searchQueries: [] as string[]
+    };
+
+    // 检查常见技术栈的准确性
+    if (stackLower.includes('abp')) {
+      if (stackLower.includes('.net') && stackLower.includes('typescript')) {
+        validation.warnings.push('ABP框架主要基于.NET，但也支持Angular/React前端，请通过联网搜索确认确切的技术栈组合');
+        validation.searchQueries.push('ABP framework tech stack .NET Angular React');
+      }
+      if (stackLower.includes('typescript') && !stackLower.includes('.net')) {
+        validation.warnings.push('ABP框架后端主要使用C#/.NET，前端可使用TypeScript，请验证完整技术栈');
+        validation.searchQueries.push('ABP framework backend C# .NET frontend TypeScript');
+      }
+      validation.suggestions.push('建议通过GitHub Copilot Chat搜索ABP framework的最新文档和最佳实践');
+    }
+
+    // 检查其他常见技术组合
+    if (stackLower.includes('react') && stackLower.includes('node')) {
+      validation.suggestions.push('React + Node.js是经典组合，建议验证版本兼容性');
+      validation.searchQueries.push('React Node.js version compatibility 2025');
+    }
+
+    if (stackLower.includes('vue') && stackLower.includes('express')) {
+      validation.suggestions.push('Vue + Express组合，建议验证最新的构建工具配置');
+      validation.searchQueries.push('Vue Express development setup 2025');
+    }
+
+    // 添加通用建议
+    validation.suggestions.push('使用GitHub Copilot Chat验证技术栈的最新最佳实践');
+    validation.suggestions.push('查询官方文档确认版本兼容性和依赖关系');
+    validation.searchQueries.push(`${techStack} best practices 2025`);
+    validation.searchQueries.push(`${techStack} official documentation setup`);
+
+    return validation;
+  }
+
+  /**
+   * 映射代理名称用于生成（调整命名规范）
+   */
+  private static mapAgentNameForGeneration(baseName: string): string {
+    const nameMap: Record<string, string> = {
+      'requirements': 'requirements-analyzer',
+      'design': 'system-designer', 
+      'coding': 'implementation-developer',
+      'test': 'quality-tester',
+      'tasks': 'project-manager',
+      'spec': 'documentation-specialist'
+    };
+    
+    return nameMap[baseName] || `${baseName}-specialist`;
+  }
+
+  /**
+   * 获取后备代理配置（使用完整的CMMI L3标准模板）
+   */
+  private static getFallbackAgentConfig(templateFile: string): any {
+    const baseName = templateFile.replace('.yaml', '').replace('-agent', '');
+    const generatedName = this.mapAgentNameForGeneration(baseName);
+    
+    const fallbackConfigs: Record<string, any> = {
+      'requirements-analyzer': {
+        version: 1,
+        name: 'requirements-analyzer',
+        title: '需求分析师，负责收集、分析和管理项目需求',
+        description: '需求分析师，负责收集、分析和管理项目需求',
+        model: 'gpt-4.1',
+        color: 'purple',
+        language: 'zh-CN',
+        capabilities: [
+          '需求分析',
+          '利益相关者管理', 
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '技术栈验证',
+          '最佳实践查询'
+        ],
+        dependencies: [],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从产品构想生成需求说明',
+            examples: ['为项目功能生成完整需求分析', '分析业务需求并生成技术需求']
+          },
+          {
+            id: 'quick',
+            description: '快速需求分析模式',
+            examples: ['快速生成MVP需求', '敏捷需求迭代分析']
+          }
+        ],
+        workflow: {
+          phase: 1,
+          parallel_execution: false,
+          inputs: [
+            {
+              type: 'business_idea',
+              description: '业务构想或产品概念',
+              required: true
+            }
+          ],
+          outputs: [
+            {
+              type: 'document',
+              name: 'requirements.md',
+              description: '需求规格说明书'
+            }
+          ],
+          quality_gates: [
+            {
+              criteria: '需求覆盖率 > 95%',
+              validation: '通过需求追溯矩阵验证'
+            },
+            {
+              criteria: '利益相关者确认',
+              validation: '需求评审会议通过'
+            }
+          ],
+          next_phases: ['system-designer', 'project-manager']
+        },
+        instructions: `# CMMI Level 3 需求开发专业代理 (Requirements Development Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的需求开发专业代理，负责执行需求开发过程域 (RD) 的所有关键实践。
+
+## 🔍 联网搜索与验证职责
+1. **技术栈验证**: 使用联网搜索验证技术框架的准确信息
+   - 搜索官方文档确认技术特性和版本兼容性
+   - 验证技术方案的可行性和最佳实践
+   - 查询社区反馈和真实案例研究
+
+2. **GitHub Copilot协作**: 
+   - 利用Copilot Chat进行技术调研和需求分析
+   - 获取相似项目的需求模板和最佳实践
+   - 验证需求的技术可实现性
+
+## 📋 核心职责
+- 收集和分析利益相关者需求
+- 建立产品和组件级需求规格
+- 通过联网搜索验证技术可行性
+- 与GitHub Copilot协作确保需求准确性
+
+## 🎯 执行原则
+始终确保需求清晰、可测试、可实现，通过联网搜索验证所有技术假设。`
+      },
+      'system-designer': {
+        version: 1,
+        name: 'system-designer',
+        title: '系统设计师，负责架构设计和详细设计',
+        description: '系统设计师，负责架构设计和详细设计',
+        model: 'gpt-4.1',
+        color: 'blue',
+        language: 'zh-CN',
+        capabilities: [
+          '系统架构',
+          '详细设计',
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '技术选型验证',
+          '架构模式查询'
+        ],
+        dependencies: ['requirements-analyzer'],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从需求生成系统设计文档',
+            examples: ['为项目需求设计完整的系统架构方案', '生成技术选型和详细设计']
+          },
+          {
+            id: 'architecture_only',
+            description: '仅生成系统架构设计',
+            examples: ['快速架构设计', '技术选型分析']
+          }
+        ],
+        workflow: {
+          phase: 2,
+          parallel_execution: false,
+          inputs: [
+            {
+              type: 'document',
+              name: 'requirements.md',
+              description: '需求规格说明书',
+              required: true
+            }
+          ],
+          outputs: [
+            {
+              type: 'document',
+              name: 'design.md',
+              description: '系统设计说明书'
+            },
+            {
+              type: 'diagram',
+              name: 'architecture.md',
+              description: '架构图和技术选型说明'
+            }
+          ],
+          quality_gates: [
+            {
+              criteria: '设计覆盖所有功能需求',
+              validation: '需求追溯矩阵验证'
+            },
+            {
+              criteria: '架构设计评审通过',
+              validation: '技术方案可行性确认'
+            }
+          ],
+          next_phases: ['implementation-developer']
+        },
+        instructions: `# CMMI Level 3 技术解决方案专业代理 (Technical Solution Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的技术解决方案专业代理，负责执行技术解决方案过程域 (TS) 的所有关键实践。
+
+## 🔍 联网搜索与验证职责  
+1. **技术架构验证**: 使用联网搜索验证架构模式和技术选型
+   - 搜索最新技术文档和最佳实践
+   - 验证框架版本兼容性和性能特征
+   - 查询架构模式适用场景和限制
+
+2. **GitHub Copilot协作**:
+   - 利用Copilot生成架构图和代码骨架
+   - 获取技术实现示例和配置模板
+   - 验证设计方案的可实现性
+
+## 📋 核心职责
+- 选择和评估技术解决方案
+- 开发系统架构和详细设计
+- 通过联网搜索验证技术可行性
+- 与GitHub Copilot协作确保设计质量
+
+## 🎯 执行原则
+确保设计方案可扩展、可维护、符合最佳实践，通过联网搜索验证所有技术决策。`
+      },
+      'implementation-developer': {
+        version: 1,
+        name: 'implementation-developer',
+        title: '开发实现专家，负责编写高质量代码',
+        description: '开发实现专家，负责编写高质量代码',
+        model: 'gpt-4.1',
+        color: 'orange',
+        language: 'zh-CN',
+        capabilities: [
+          '代码实现',
+          '最佳实践',
+          '代码审查',
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '框架使用验证',
+          'API文档查询'
+        ],
+        dependencies: ['system-designer'],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从设计文档生成代码实现',
+            examples: ['根据系统设计实现核心功能模块']
+          }
+        ],
+        instructions: `# CMMI Level 3 开发实现专业代理 (Implementation Developer Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的开发实现专业代理，负责将设计转化为高质量的代码实现。
+
+## 🔍 联网搜索与验证职责
+1. **框架和库验证**: 使用联网搜索验证技术框架的正确使用
+   - 查询官方API文档和使用指南
+   - 验证版本兼容性和最佳实践
+   - 搜索社区解决方案和代码示例
+
+2. **GitHub Copilot协作**:
+   - 利用Copilot生成代码模板和实现骨架
+   - 获取代码优化建议和重构方案
+   - 验证代码质量和安全性
+
+## 📋 核心职责
+- 编写符合设计规范的高质量代码
+- 进行代码审查和重构优化
+- 通过联网搜索验证技术实现
+- 与GitHub Copilot协作提升代码质量
+
+## 🎯 执行原则
+始终遵循编码规范，编写可读、可维护的代码，通过联网搜索确保技术实现的正确性。`
+      },
+      'quality-tester': {
+        version: 1,
+        name: 'quality-tester',
+        title: '质量保证专家，负责测试和质量管理',
+        description: '质量保证专家，负责测试和质量管理',
+        model: 'gpt-4.1',
+        color: 'red',
+        language: 'zh-CN',
+        capabilities: [
+          '测试规划',
+          '测试执行',
+          '质量保证',
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '测试框架验证',
+          '质量标准查询'
+        ],
+        dependencies: ['implementation-developer'],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从实现代码生成测试用例',
+            examples: ['为核心功能模块设计完整的测试方案']
+          }
+        ],
+        instructions: `# CMMI Level 3 验证与确认专业代理 (Verification & Validation Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的验证与确认专业代理，负责确保产品质量符合需求和设计规范。
+
+## 🔍 联网搜索与验证职责
+1. **测试框架验证**: 使用联网搜索验证测试工具和框架
+   - 查询测试框架最佳实践和配置
+   - 验证测试工具版本兼容性
+   - 搜索测试模式和质量标准
+
+2. **GitHub Copilot协作**:
+   - 利用Copilot生成测试用例和测试代码
+   - 获取测试自动化方案和配置模板
+   - 验证测试覆盖率和质量指标
+
+## 📋 核心职责
+- 制定测试策略和测试计划
+- 设计和执行测试用例
+- 通过联网搜索验证测试方法
+- 与GitHub Copilot协作提升测试质量
+
+## 🎯 执行原则
+确保产品质量符合要求，测试覆盖充分，通过联网搜索验证所有测试假设。`
+      },
+      'project-manager': {
+        version: 1,
+        name: 'project-manager',
+        title: '项目经理，负责项目规划和协调管理',
+        description: '项目经理，负责项目规划和协调管理',
+        model: 'gpt-4.1',
+        color: 'yellow',
+        language: 'zh-CN',
+        capabilities: [
+          '项目规划',
+          '任务管理',
+          '资源协调',
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '项目方法论查询',
+          '风险管理验证'
+        ],
+        dependencies: ['requirements-analyzer', 'system-designer', 'implementation-developer', 'quality-tester'],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从项目需求生成项目管理计划',
+            examples: ['为项目制定完整的任务分解和进度计划']
+          }
+        ],
+        instructions: `# CMMI Level 3 项目管理专业代理 (Project Management Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的项目管理专业代理，负责项目规划、监控和协调各个开发活动。
+
+## 🔍 联网搜索与验证职责
+1. **项目方法论验证**: 使用联网搜索验证项目管理最佳实践
+   - 查询敏捷、瀑布等方法论适用场景
+   - 验证项目管理工具和模板
+   - 搜索行业基准和成功案例
+
+2. **GitHub Copilot协作**:
+   - 利用Copilot生成项目文档和计划模板
+   - 获取项目管理自动化方案
+   - 验证项目风险和缓解策略
+
+## 📋 核心职责
+- 制定项目计划和任务分解
+- 协调各个代理的工作流程
+- 通过联网搜索验证管理方法
+- 与GitHub Copilot协作优化项目执行
+
+## 🎯 执行原则
+确保项目按时按质完成，团队高效协作，通过联网搜索验证所有管理决策。`
+      },
+      'documentation-specialist': {
+        version: 1,
+        name: 'documentation-specialist',
+        title: '技术文档工程师，负责规范和文档编写',
+        description: '技术文档工程师，负责规范和文档编写',
+        model: 'gpt-4.1',
+        color: 'green',
+        language: 'zh-CN',
+        capabilities: [
+          '文档编写',
+          '规范制定',
+          '流程调度',
+          '联网搜索验证',
+          'GitHub Copilot协作',
+          '文档标准查询',
+          '模板验证'
+        ],
+        dependencies: ['requirements-analyzer', 'system-designer', 'implementation-developer', 'quality-tester', 'project-manager'],
+        entrypoints: [
+          {
+            id: 'default',
+            description: '从想法到任务到实现再到测试的全流程生成',
+            examples: ['生成完整的项目文档和规范体系']
+          }
+        ],
+        instructions: `# CMMI Level 3 流程调度与文档专业代理 (Documentation & Process Orchestration Agent)
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的流程调度与文档专业代理，负责协调其他agents完成从想法到实现到测试的闭环。
+
+## 🔍 联网搜索与验证职责
+1. **文档标准验证**: 使用联网搜索验证文档标准和最佳实践
+   - 查询行业文档规范和模板
+   - 验证文档格式和结构标准
+   - 搜索技术写作最佳实践
+
+2. **GitHub Copilot协作**:
+   - 利用Copilot生成文档模板和内容骨架
+   - 获取文档自动化工具和流程
+   - 验证文档质量和完整性
+
+## 📋 核心职责
+- 调度其他agents完成全流程开发
+- 生成高质量的技术文档和规范
+- 通过联网搜索验证文档标准
+- 与GitHub Copilot协作优化文档质量
+
+## 🎯 执行原则
+确保文档完整、规范、易读，通过联网搜索验证所有文档标准。`
+      }
+    };
+    
+    return fallbackConfigs[generatedName] || {
+      version: 1,
+      name: generatedName,
+      title: `${generatedName}专业助手`,
+      description: `${generatedName}专业助手`,
+      model: 'gpt-4.1',
+      color: 'gray',
+      language: 'zh-CN',
+      capabilities: [
+        'general_assistance',
+        '联网搜索验证',
+        'GitHub Copilot协作'
+      ],
+      entrypoints: [
+        {
+          id: 'default',
+          description: '提供专业服务',
+          examples: ['协助完成相关专业任务']
+        }
+      ],
+      instructions: `你是一个专业的AI助手，负责协助完成相关任务。
+
+## 🔍 联网搜索与验证职责
+- 使用联网搜索验证技术信息的准确性
+- 查询最新的行业最佳实践和标准
+- 验证技术方案的可行性和兼容性
+
+## 📋 GitHub Copilot协作
+- 利用GitHub Copilot提供智能建议
+- 协助生成代码、文档和配置模板
+- 验证技术实现的正确性
+
+始终确保信息准确、方案可行。`
+    };
   }
 
   /**
@@ -2530,7 +3030,7 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   }
 
   /**
-   * 生成README文件
+   * 生成README文件 - 包含技术栈验证说明
    */
   private static generateREADME(config: any): string {
     return `# ${config.projectName}
@@ -2539,11 +3039,25 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
 
 这是一个基于CMMI标准的${config.projectType}项目，使用${config.techStack}技术栈。
 
+> **📋 注意**: 本项目的技术栈信息需要通过以下方式进行验证：
+> - 🔍 **联网搜索**: 使用GitHub Copilot Chat搜索最新的技术文档
+> - ✅ **官方验证**: 查询官方文档确认版本兼容性和最佳实践  
+> - 🤝 **Copilot协作**: 利用GitHub Copilot验证技术方案可行性
+
 ## 技术栈
 
 - **技术栈**: ${config.techStack}
 - **项目类型**: ${config.projectType}
 - **支持语言**: ${config.languages.join(', ')}
+
+## 验证清单
+
+在开始开发前，请确保：
+
+- [ ] 🔍 已通过联网搜索验证技术栈的准确性
+- [ ] 📚 已查询最新的官方文档和API规范
+- [ ] 🤖 已与GitHub Copilot协作验证技术方案
+- [ ] ✅ 已确认所有依赖的版本兼容性
 
 ## 快速开始
 

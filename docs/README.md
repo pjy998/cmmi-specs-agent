@@ -1,43 +1,40 @@
-# 📚 项目文档目录
+# 📚 CMMI Specs Agent 文档中心
 
-本目录包含CMMI Specs Agent项目的所有文档资料。
+本目录包含CMMI Specs Agent智能代理系统的核心文档，按照CMMI Level 3标准组织。
 
-## 📋 文档分类
+## 📋 文档结构
 
-### 🏗️ 项目管理文档
-- [`PROJECT_CLEANUP_REPORT.md`](./PROJECT_CLEANUP_REPORT.md) - 项目清理报告
-- [`FILE_OPTIMIZATION_REPORT.md`](./FILE_OPTIMIZATION_REPORT.md) - 源码文件名优化报告
+### 🏗️ 系统核心文档
+- [智能化项目初始化需求规格.md](智能化项目初始化需求规格.md) - 智能项目初始化系统需求规格
+- [Agent模板标准规范.md](Agent模板标准规范.md) - CMMI L3标准Agent配置规范
+- [VS_CODE_INTEGRATION_GUIDE.md](VS_CODE_INTEGRATION_GUIDE.md) - VS Code MCP集成使用指南
 
-### �️ 使用指南
-- [`VS_CODE_INTEGRATION_GUIDE.md`](./VS_CODE_INTEGRATION_GUIDE.md) - VS Code MCP集成使用指南
+### 📊 CMMI Level 3 过程域标准
+| 文档 | 过程域 | 描述 |
+|------|--------|------|
+| [CMMI_L3_STANDARD_OVERVIEW.md](CMMI_L3_STANDARD_OVERVIEW.md) | 概览 | CMMI L3成熟度等级总体介绍 |
+| [CMMI_L3_REQUIREMENTS_DEVELOPMENT.md](CMMI_L3_REQUIREMENTS_DEVELOPMENT.md) | RD | 需求开发过程域标准 |
+| [CMMI_L3_TECHNICAL_SOLUTION.md](CMMI_L3_TECHNICAL_SOLUTION.md) | TS | 技术解决方案过程域标准 |
+| [CMMI_L3_VERIFICATION_VALIDATION.md](CMMI_L3_VERIFICATION_VALIDATION.md) | VER/VAL | 验证与确认过程域标准 |
 
-### �📖 CMMI标准文档
-- [`CMMI_L3_STANDARD_OVERVIEW.md`](./CMMI_L3_STANDARD_OVERVIEW.md) - CMMI Level 3标准概述
-- [`CMMI_L3_REQUIREMENTS_DEVELOPMENT.md`](./CMMI_L3_REQUIREMENTS_DEVELOPMENT.md) - 需求开发过程
-- [`CMMI_L3_TECHNICAL_SOLUTION.md`](./CMMI_L3_TECHNICAL_SOLUTION.md) - 技术解决方案
-- [`CMMI_L3_VERIFICATION_VALIDATION.md`](./CMMI_L3_VERIFICATION_VALIDATION.md) - 验证与确认
+### 📁 实施文档集
+- \`cmmi-standard/\` - 完整的CMMI实施文档集合
+  - \`requirements.md\` - 需求规格说明书实例
+  - \`design.md\` - 系统设计文档实例  
+  - \`tasks.md\` - 任务实施计划实例
 
-### 📁 子目录
-- [`cmmi-standard/`](./cmmi-standard/) - CMMI标准详细文档
-  - `README.md` - 标准文档说明
-  - `requirements.md` - 需求管理
-  - `design.md` - 设计规范
-  - `tasks.md` - 任务管理
+## 🎯 文档使用指南
 
-## 📝 文档维护
+1. **新用户**: 从\`智能化项目初始化需求规格.md\`开始了解系统概览
+2. **开发者**: 参考\`Agent模板标准规范.md\`了解agent配置标准
+3. **项目管理**: 使用\`cmmi-standard/\`目录中的实施文档模板
+4. **集成配置**: 查看\`VS_CODE_INTEGRATION_GUIDE.md\`进行VS Code配置
 
-- **更新频率**: 随项目演进持续更新
-- **维护原则**: 保持文档与代码同步
-- **文档格式**: 统一使用Markdown格式
+## 🔄 文档状态
 
-## 🔍 快速导航
-
-| 文档类型 | 用途 | 目标读者 |
-|---------|------|---------|
-| 项目管理文档 | 记录项目变更和优化过程 | 开发团队、项目管理者 |
-| 使用指南 | 系统集成和使用说明 | 开发人员、用户 |
-| CMMI标准文档 | 指导开发流程和质量管理 | 开发人员、质量工程师 |
-| 标准详细文档 | 具体实施指南 | 开发人员、系统架构师 |
+- ✅ **已清理**: 移除过时的安装、故障排除和重复用户指南
+- ✅ **标准化**: 按照CMMI L3标准重新组织文档结构
+- 🔄 **持续更新**: 随着系统功能完善持续更新文档内容
 
 ---
 
