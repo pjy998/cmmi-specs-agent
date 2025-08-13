@@ -1,3 +1,75 @@
 {
-  "type": "module"
+  "name": "cmmi-specs-mcp",
+  "version": "0.0.1",
+  "description": "基于MCP协议的CMMI规范智能代理系统，实现VS Code Copilot Chat集成与多语言文档生成",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "cmmi-specs-mcp": "./dist/cli.js",
+    "cmmi-mcp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "npm run build:mcp && npm run build:cli",
+    "build:mcp": "cd mcp-server && npm install && npm run build",
+    "build:cli": "mkdir -p dist && cp cli.js dist/ && chmod +x dist/cli.js",
+    "start": "node mcp-server/start-mcp.mjs",
+    "test": "npm run test:mcp && npm run test:cli",
+    "test:mcp": "cd mcp-server && npm test",
+    "test:cli": "cd tests && npm test",
+    "install-dev": "./install-mcp.sh",
+    "install-vscode": "./install-vscode.sh",
+    "validate": "cd tests && ./verify-mcp.sh"
+  },
+  "keywords": [
+    "mcp",
+    "cmmi",
+    "agent",
+    "copilot",
+    "ai",
+    "documentation",
+    "workflow",
+    "multi-agent",
+    "typescript",
+    "vscode"
+  ],
+  "author": "Jieky",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pjy998/cmmi-specs-agent.git"
+  },
+  "homepage": "https://github.com/pjy998/cmmi-specs-agent#readme",
+  "bugs": {
+    "url": "https://github.com/pjy998/cmmi-specs-agent/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "js-yaml": "^4.1.0",
+    "uuid": "^10.0.0",
+    "openai": "^4.67.3",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "zod": "^3.23.8",
+    "winston": "^3.14.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.6.2"
+  },
+  "files": [
+    "dist/",
+    "mcp-server/",
+    "mcp-server/dist/",
+    "agents/",
+    "configs/",
+    "docs/",
+    "install-mcp.sh",
+    "install-vscode.sh",
+    "README.md",
+    "LICENSE"
+  ]
 }

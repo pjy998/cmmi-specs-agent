@@ -1,11 +1,11 @@
 {
-  "name": "copilot-multi-agent-orchestrator",
-  "version": "1.0.0",
-  "description": "MCP-driven dynamic multi-agent execution orchestrator for GitHub Copilot",
+  "name": "cmmi-specs-mcp-server",
+  "version": "0.0.1",
+  "description": "CMMI Specs MCP Server - Multi-agent execution orchestrator for GitHub Copilot",
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc || (npm install --no-save typescript && npx tsc)",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "test": "jest",
@@ -13,7 +13,7 @@
     "format": "prettier --write src/**/*.ts"
   },
   "bin": {
-    "copilot-multi-agent-orchestrator": "dist/server.js"
+    "cmmi-specs-agent-server": "dist/server.js"
   },
   "keywords": [
     "mcp",

@@ -1,0 +1,15 @@
+# NPM ignore file - explicitly include dist/ for publication
+node_modules/
+.git/
+*.log
+.env
+.DS_Store
+tests/
+*.test.js
+*.spec.js
+coverage/
+.nyc_output/
+
+# Force include dist directories
+!dist/
+!mcp-server/dist/

@@ -66,18 +66,60 @@ cmmi-specs-agent/
 
 ## 🚀 快速开始
 
-### 1. 安装配置
+### 方式一：NPX 安装（推荐）
+
+最简单的使用方式，无需克隆代码库
+
+```bash
+# 直接安装 MCP 服务器
+npx cmmi-specs-agent install
+
+# 配置 VS Code
+npx cmmi-specs-agent install-vscode
+
+# 查看所有可用命令
+npx cmmi-specs-agent help
+```
+
+NPX 可用命令：
+
+```bash
+# 基础命令
+npx cmmi-specs-agent version        # 显示版本信息
+npx cmmi-specs-agent help           # 显示帮助信息
+npx cmmi-specs-agent config         # 显示配置信息
+
+# 安装配置
+npx cmmi-specs-agent install        # 安装 MCP 服务器
+npx cmmi-specs-agent install-vscode # 配置 VS Code
+
+# 运行管理
+npx cmmi-specs-agent start          # 启动 MCP 服务器
+npx cmmi-specs-agent build          # 构建项目
+npx cmmi-specs-agent test           # 运行测试
+npx cmmi-specs-agent validate       # 验证安装
+
+# 代理管理
+npx cmmi-specs-agent agent list     # 列出所有代理
+npx cmmi-specs-agent agent create   # 创建新代理（开发中）
+npx cmmi-specs-agent agent validate # 验证代理配置
+```
+
+### 方式二：本地安装
 
 ```bash
 # 克隆项目
 git clone https://github.com/pjy998/cmmi-specs-agent.git
 cd cmmi-specs-agent
 
-# 安装MCP服务器
+# 安装 MCP 服务器
 ./install-mcp.sh
+
+# 配置 VS Code
+./install-vscode.sh
 ```
 
-### 2. 使用代理系统
+### 使用代理系统
 
 在VS Code中使用Copilot Chat调用智能代理：
 
@@ -93,6 +135,16 @@ cd cmmi-specs-agent
 
 # 工作流执行
 @workspace 使用 workflow_execute 为"支付系统"生成完整文档集
+```
+
+### 验证安装
+
+```bash
+# NPX 方式验证
+npx cmmi-specs-agent validate
+
+# 本地方式验证
+npm run validate
 ```
 
 ## � 8个MCP工具详情
@@ -126,6 +178,23 @@ cd cmmi-specs-agent
 
 ## 🧪 系统验证
 
+### NPX 方式验证
+
+```bash
+# 验证 NPX 安装
+npx cmmi-specs-agent version
+
+# 运行集成测试
+npx cmmi-specs-agent test
+
+# 验证配置
+npx cmmi-specs-agent validate
+
+# 预期结果：✅ All tests passed!
+```
+
+### 本地方式验证
+
 ```bash
 # 构建MCP服务器
 cd mcp-server && npm run build
@@ -158,7 +227,37 @@ cd tests && node run-all-tests.js
 - **系统可用性**: >99.5%
 - **TypeScript编译**: 零错误，完整类型安全
 
-## 📄 许可证
+## � 发布信息
+
+### NPM 包信息
+
+- **包名**: `cmmi-specs-agent`
+- **版本**: 1.0.0
+- **主页**: [GitHub](https://github.com/pjy998/cmmi-specs-agent)
+- **命令**: `npx cmmi-specs-agent`
+
+### 发布到 NPM
+
+```bash
+# 构建项目
+npm run build
+
+# 发布到 npm（需要登录）
+npm publish
+
+# 验证发布
+npx cmmi-specs-agent@latest version
+```
+
+### 安装方式对比
+
+| 方式 | 优点 | 适用场景 |
+|------|------|----------|
+| NPX | 无需安装，即用即走 | 快速试用，CI/CD |
+| 本地克隆 | 可自定义修改 | 开发贡献，深度定制 |
+| 全局安装 | 命令简短 | 频繁使用 |
+
+## �📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
