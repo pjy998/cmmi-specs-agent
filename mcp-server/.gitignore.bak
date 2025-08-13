@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build output
-# dist/ # Commented for npm publish
+dist/
 
 # Logs
 logs/
