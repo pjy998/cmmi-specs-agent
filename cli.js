@@ -168,22 +168,28 @@ async function initProject(targetDir) {
 
   log('blue', `🚀 在目录 ${targetDir} 初始化CMMI项目...`);
   try {
-    // 调用内置的项目初始化功能
+    // 调用新的项目创建引擎
     await runCommand('node', ['-e', `
-      import('./dist/core/workflowOrchestrator.js').then(module => {
-        const { WorkflowOrchestrator } = module;
-        return WorkflowOrchestrator.executeIntelligentProjectInitialization('${targetDir}', {
+      import('./dist/core/projectCreationEngine.js').then(module => {
+        const { ProjectCreationEngine } = module;
+        const config = {
           projectName: '${targetDir.split('/').pop()}',
           projectType: 'cmmi-standard',
-          initMode: 'cli'
-        });
+          targetDirectory: '${targetDir}',
+          techStack: ['TypeScript', 'Node.js'],
+          cmmLevel: 3,
+          generateDocs: true
+        };
+        return ProjectCreationEngine.createProject(config);
       }).then(result => {
-        console.log('\\n🎉 项目初始化结果:');
+        console.log('\\n🎉 项目创建结果:');
         console.log('✅ 成功:', result.success);
-        console.log('📝 消息:', result.message);
-        console.log('📁 路径:', result.project_path);
+        console.log('� 路径:', result.projectPath);
+        console.log('📊 创建文件:', result.createdFiles.length);
+        console.log('🤖 生成代理:', result.generatedAgents.length);
         console.log('⏱️ 耗时:', result.duration + 'ms');
         if (!result.success) {
+          console.error('❌ 错误:', result.errors);
           process.exit(1);
         }
       }).catch(error => {

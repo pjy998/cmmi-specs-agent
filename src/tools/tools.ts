@@ -289,42 +289,42 @@ const SystemMonitorSchema = {
 export const mcpTools = [
   {
     name: 'agent_manage',
-    description: 'Unified agent management: create, list, generate smart agents, or initialize CMMI agents',
+    description: '[agent_manage] [代理管理] [CMMI代理] [创建代理] [团队管理] Agent management: create agents, generate smart agents, setup CMMI agents, manage team members, build development team, create AI assistants, setup project roles, initialize agent system',
     inputSchema: AgentManageSchema
   },
   {
     name: 'task_analyze',
-    description: 'Analyze a task and recommend required agents and complexity',
+    description: '[task_analyze] [任务分析] [CMMI分析] [复杂度评估] [项目分析] Task analysis: analyze requirements, evaluate complexity, assess project scope, recommend team structure, estimate effort, analyze user stories, break down features, evaluate technical difficulty',
     inputSchema: TaskAnalyzeSchema
   },
   {
     name: 'workflow_execute',
-    description: 'Execute a multi-agent workflow with intelligent orchestration',
+    description: '[workflow_execute] [工作流执行] [CMMI工作流] [执行流程] [多代理协作] Workflow execution: run multi-agent process, execute development workflow, coordinate team tasks, orchestrate project phases, manage CMMI processes, run automated workflows',
     inputSchema: WorkflowExecuteSchema
   },
   {
     name: 'intelligent_translate',
-    description: 'Translate content using GPT-4.1 with context awareness for technical documents',
+    description: '[intelligent_translate] [智能翻译] [CMMI翻译] [文档转换] [翻译工具] Intelligent translation: translate documents, convert requirements, localize content, translate technical specs, convert documentation, multilingual support, language conversion',
     inputSchema: IntelligentTranslateSchema
   },
   {
     name: 'config_validate',
-    description: 'Project operations: generate new projects or validate configurations',
+    description: '[config_validate] [配置验证] [CMMI配置] [项目初始化] [环境设置] Project configuration: validate project setup, generate project structure, create new projects, setup development environment, initialize codebase, project scaffolding',
     inputSchema: ProjectOpsSchema
   },
   {
     name: 'quality_analyze',
-    description: 'Perform quality analysis on project code and documentation',
+    description: '[quality_analyze] [质量分析] [CMMI质量] [代码审查] [质量检查] Quality analysis: code review, quality assessment, performance analysis, security audit, code quality check, technical debt analysis, compliance validation, best practices review',
     inputSchema: QualityAnalyzeSchema
   },
   {
     name: 'model_schedule',
-    description: 'Schedule and manage AI model access for agents',
+    description: '[model_schedule] [模型调度] [CMMI调度] [AI资源] [模型管理] Model scheduling: manage AI resources, allocate computing resources, schedule model access, optimize AI usage, coordinate model execution, resource management',
     inputSchema: ModelScheduleSchema
   },
   {
     name: 'system_diagnosis',
-    description: 'Unified system monitoring: get status metrics or perform comprehensive diagnosis',
+    description: '[system_diagnosis] [系统诊断] [CMMI诊断] [系统检查] [健康监控] System diagnosis: monitor system health, check project status, diagnose issues, system analysis, performance monitoring, health check, troubleshooting, system metrics',
     inputSchema: SystemMonitorSchema
   }
 ];
