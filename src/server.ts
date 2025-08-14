@@ -15,6 +15,26 @@ import {
 import { mcpTools } from './tools/tools.js';
 import { UnifiedToolHandlers } from './tools/handlers.js';
 import { logger } from './utils/logger.js';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// 获取版本信息
+function getPackageVersion(): string {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const packagePath = join(__dirname, '../package.json');
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
+    return packageJson.version;
+  } catch (error) {
+    return 'unknown';
+  }
+}
+
+// 调试模式检查
+const DEBUG_MODE = process.env['DEBUG_MCP'] === 'true' || process.env['LOG_LEVEL'] === 'debug';
+const PACKAGE_VERSION = getPackageVersion();
 
 /**
  * Optimized server class for the multi-agent orchestrator with 8 tools
@@ -24,10 +44,13 @@ class OptimizedMultiAgentOrchestratorServer {
   private clientRoots: string[] = []; // 存储客户端提供的根路径
 
   constructor() {
+    // 启动时显示版本信息
+    this.logStartupInfo();
+
     this.server = new Server(
       {
         name: 'copilot-multi-agent-orchestrator-optimized',
-        version: '2.0.0',
+        version: PACKAGE_VERSION,
       },
       {
         capabilities: {
@@ -41,6 +64,23 @@ class OptimizedMultiAgentOrchestratorServer {
 
     this.setupToolHandlers();
     this.setupErrorHandler();
+  }
+
+  private logStartupInfo(): void {
+    console.error(`🚀 CMMI Specs MCP Server v${PACKAGE_VERSION}`);
+    console.error(`📅 Started at: ${new Date().toISOString()}`);
+    console.error(`🛠️  Tools available: ${mcpTools.length}`);
+    console.error(`🐛 Debug mode: ${DEBUG_MODE ? 'ON' : 'OFF'}`);
+    console.error(`📋 Environment: ${process.env['NODE_ENV'] || 'development'}`);
+    
+    if (DEBUG_MODE) {
+      console.error(`🔍 Debug logging enabled`);
+      console.error(`📋 Available tools:`);
+      mcpTools.forEach((tool, index) => {
+        console.error(`   ${index + 1}. ${tool.name} - ${tool.description.split(':')[0]}`);
+      });
+    }
+    console.error(`${'='.repeat(60)}`);
   }
 
   private setupToolHandlers(): void {
@@ -84,7 +124,12 @@ class OptimizedMultiAgentOrchestratorServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       
-      // Log every tool call request
+      // Log every tool call request with debug info
+      if (DEBUG_MODE) {
+        console.error(`🔧 [DEBUG] Tool call: ${name}`);
+        console.error(`📊 [DEBUG] Arguments:`, JSON.stringify(args, null, 2));
+        console.error(`⏰ [DEBUG] Timestamp: ${new Date().toISOString()}`);
+      }
       logger.info(`🔧 Optimized tool call received: ${name}`, { args });
 
       // Ensure args is always an object
@@ -95,12 +140,21 @@ class OptimizedMultiAgentOrchestratorServer {
         const defaultPath = this.getDefaultProjectPath();
         if (defaultPath !== process.cwd()) {
           safeArgs.project_path = defaultPath;
+          if (DEBUG_MODE) {
+            console.error(`🎯 [DEBUG] Auto-detected project path: ${safeArgs.project_path}`);
+          }
           logger.info(`🎯 Auto-detected project path from client workspace: ${safeArgs.project_path}`);
         }
       }
 
+      const startTime = Date.now();
+      
       try {
         let result: any;
+
+        if (DEBUG_MODE) {
+          console.error(`⚡ [DEBUG] Executing tool: ${name}`);
+        }
 
         switch (name) {
           // Unified agent management
@@ -161,6 +215,14 @@ class OptimizedMultiAgentOrchestratorServer {
         }
 
         // Format the response according to MCP protocol
+        const executionTime = Date.now() - startTime;
+        
+        if (DEBUG_MODE) {
+          console.error(`✅ [DEBUG] Tool ${name} completed in ${executionTime}ms`);
+          console.error(`📊 [DEBUG] Result size: ${JSON.stringify(result).length} characters`);
+          console.error(`📄 [DEBUG] Result preview:`, JSON.stringify(result, null, 2).substring(0, 200) + '...');
+        }
+
         const response = {
           content: [
             {
@@ -173,12 +235,20 @@ class OptimizedMultiAgentOrchestratorServer {
         // Log successful tool execution
         logger.info(`✅ Optimized tool executed successfully: ${name}`, { 
           success: true,
+          executionTime: `${executionTime}ms`,
           resultSize: JSON.stringify(result).length 
         });
         
         return response;
 
       } catch (error) {
+        const executionTime = Date.now() - startTime;
+        
+        if (DEBUG_MODE) {
+          console.error(`❌ [DEBUG] Tool ${name} failed after ${executionTime}ms`);
+          console.error(`💥 [DEBUG] Error details:`, error);
+        }
+        
         logger.error(`Optimized tool execution error for ${name}:`, error);
         return {
           content: [
@@ -226,23 +296,7 @@ class OptimizedMultiAgentOrchestratorServer {
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     
-    // 优化版服务器启动信息（仅在调试模式下输出到文件）
-    if (process.env['DEBUG_MCP']) {
-      logger.info('🚀 Starting Copilot Multi-Agent Orchestrator MCP Server (Optimized v2.0)');
-      logger.info('🎯 Optimized from 13 tools to 8 tools (38% reduction)');
-      logger.info('📋 Available optimized tools:');
-      logger.info('  Unified Tools (3):');
-      logger.info('  • agent_manage - Unified agent management (create/list/generate/init)');
-      logger.info('  • project_ops - Unified project operations (generate/validate)');
-      logger.info('  • system_monitor - Unified system monitoring (status/diagnosis)');
-      logger.info('  Standalone Tools (5):');
-      logger.info('  • task_analyze - Analyze tasks and recommend agents');
-      logger.info('  • workflow_execute - Execute multi-agent workflows');
-      logger.info('  • intelligent_translate - Smart translation with context');
-      logger.info('  • quality_analyze - Project quality analysis');
-      logger.info('  • model_schedule - AI model access scheduling');
-    }
-    
+    // 连接到客户端
     await this.server.connect(transport);
     
     // Send ready notification to client (MCP protocol requirement)
@@ -250,7 +304,11 @@ class OptimizedMultiAgentOrchestratorServer {
       method: 'notifications/ready'
     });
     
-    if (process.env['DEBUG_MCP']) {
+    // 连接成功日志
+    console.error(`✅ CMMI Specs MCP Server v${PACKAGE_VERSION} connected and ready!`);
+    if (DEBUG_MODE) {
+      console.error(`🔗 [DEBUG] Transport: StdioServerTransport`);
+      console.error(`📡 [DEBUG] Ready notification sent to client`);
       logger.info('✅ Optimized server connected and ready for requests');
     }
   }
