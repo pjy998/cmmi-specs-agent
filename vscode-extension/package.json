@@ -1,0 +1,72 @@
+{
+  "name": "cmmi-specs-vscode",
+  "displayName": "CMMI Specs Agent",
+  "description": "VS Code extension for CMMI Level 3 development workflow automation",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "publisher": "cmmi-specs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pjy998/cmmi-specs-agent"
+  },
+  "keywords": [
+    "cmmi",
+    "workflow",
+    "automation",
+    "agent"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cmmi.testCopilot",
+        "title": "Test Copilot Chat Integration",
+        "category": "CMMI"
+      },
+      {
+        "command": "cmmi.analyzeTask",
+        "title": "Analyze Task",
+        "category": "CMMI"
+      },
+      {
+        "command": "cmmi.createAgent",
+        "title": "Create Agent",
+        "category": "CMMI"
+      },
+      {
+        "command": "cmmi.manageWorkflow",
+        "title": "Manage Workflow",
+        "category": "CMMI"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "cmmi.test",
+        "name": "cmmi",
+        "description": "CMMI 大模型功能验证",
+        "isSticky": true
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0"
+  }
+}

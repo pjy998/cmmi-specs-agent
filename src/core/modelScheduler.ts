@@ -206,8 +206,8 @@ export class ModelScheduler {
         }
       };
       
-      // 5. 调用Copilot Chat API
-      const response = await this.callCopilotChat(request);
+      // 5. 调用分析功能（而不是外部模型API）
+      const response = await this.callAnalysisFunction(request);
       
       // 6. 构建响应
       const responseTime = Date.now() - startTime;
@@ -227,55 +227,59 @@ export class ModelScheduler {
   }
 
   /**
-   * 调用Copilot Chat API
-   * Call Copilot Chat API with timeout and retry logic
+   * 调用分析功能（不直接调用大模型）
+   * Call analysis functionality (without direct AI model calls)
+   * 
+   * MCP工具的职责是提供分析结果，大模型推理由VS Code Copilot处理
    */
-  private async callCopilotChat(request: CopilotChatRequest): Promise<string> {
+  private async callAnalysisFunction(request: CopilotChatRequest): Promise<string> {
     const { model, prompt, options } = request;
     const timeout = options.timeout || this.config.copilotChatConfig.timeout;
     
     // 创建超时Promise
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout);
+      setTimeout(() => reject(new Error(`Analysis timeout after ${timeout}ms`)), timeout);
     });
     
-    // 模拟API调用（实际实现需要集成VS Code Copilot Chat API）
-    const apiCallPromise = this.simulateApiCall(model, prompt, options);
+    // 分析功能调用
+    const analysisPromise = this.analyzeWithoutModelCall(model, prompt, options);
     
     try {
       // 使用Promise.race实现超时控制
-      const result = await Promise.race([apiCallPromise, timeoutPromise]);
+      const result = await Promise.race([analysisPromise, timeoutPromise]);
       return result;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Timeout')) {
-        throw new Error(`${model} API call timed out after ${timeout}ms`);
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error(`Analysis timed out after ${timeout}ms`);
       }
       throw error;
     }
   }
 
   /**
-   * 模拟API调用（临时实现）
-   * Simulate API call (temporary implementation)
+   * 注意：MCP工具无法直接调用外部大模型API
+   * Note: MCP tools cannot directly call external AI model APIs
+   * 
+   * 大模型推理应该通过 VS Code Copilot Chat 进行
+   * AI model inference should be done through VS Code Copilot Chat
    */
-  private async simulateApiCall(
+  private async analyzeWithoutModelCall(
     model: AIModel, 
     prompt: string, 
     options: ModelInvokeOptions
   ): Promise<string> {
-    // 模拟网络延迟
-    const delay = model === 'gpt-4.1' ? 1000 + Math.random() * 2000 : 1500 + Math.random() * 3000;
+    // 返回分析结果而不是模拟的AI回答
+    return `任务分析结果:
     
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
-    // 模拟响应内容
-    return `[${model}] 模拟响应内容针对输入: ${prompt.substring(0, 50)}...
-    
-复杂度: ${options.complexity}
-超时设置: ${options.timeout}ms
-域: ${options.domain || 'technical'}
+推荐模型: ${model}
+任务复杂度: ${options.complexity}
+处理域: ${options.domain || 'technical'}
+建议超时: ${options.timeout}ms
 
-这是一个模拟的AI模型响应。在实际实现中，这里会调用真实的Copilot Chat API。`;
+提示内容长度: ${prompt.length} 字符
+建议: 请在VS Code Copilot Chat中使用此分析结果进行进一步处理。
+
+注意: MCP工具专注于分析和工具功能，大模型推理请通过Copilot Chat进行。`;
   }
 
   /**
