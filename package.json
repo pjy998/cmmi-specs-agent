@@ -14,6 +14,8 @@
     "build:cli": "mkdir -p dist && cp cli.js dist/ && chmod +x dist/cli.js && cp -r agents dist/ 2>/dev/null || true",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
+    "test": "node --loader ts-node/esm tests/*.test.ts",
+    "test:jest": "jest --testPathPattern=tests/",
     "install-dev": "./install-mcp.sh",
     "install-vscode": "./install-vscode.sh",
     "lint": "eslint src/**/*.ts",

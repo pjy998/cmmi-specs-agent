@@ -113,7 +113,11 @@ export class ProjectCreationEngine {
         result.createdFiles.push('README.md', 'CMMI_COMPLIANCE.md', 'WORKFLOW_GUIDE.md');
       }
 
-      // 6. 生成CMMI追溯矩阵
+      // 6. 生成构建配置文件
+      await this.generateBuildConfiguration(config);
+      result.createdFiles.push('tsconfig.json', '.eslintrc.json', 'jest.config.js', '.github/workflows/ci.yml');
+
+      // 7. 生成CMMI追溯矩阵
       result.cmmTraceabilityMatrix = await this.generateTraceabilityMatrix(
         config, 
         agentDiscovery,
@@ -192,18 +196,37 @@ export class ProjectCreationEngine {
       version: "1.0.0",
       description: `CMMI L${config.cmmLevel || 3} compliant project: ${config.projectName}`,
       type: "module",
+      main: "dist/index.js",
+      types: "dist/index.d.ts",
       scripts: {
-        "start": "node src/index.js",
-        "test": "npm run test:unit && npm run test:integration",
-        "test:unit": "echo 'Unit tests'",
-        "test:integration": "echo 'Integration tests'",
-        "build": "echo 'Build process'",
+        "start": "node dist/index.js",
+        "dev": "ts-node-esm src/index.ts",
+        "build": "tsc",
+        "clean": "rm -rf dist",
+        "prebuild": "npm run clean",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "lint": "eslint src/**/*.ts",
+        "lint:fix": "eslint src/**/*.ts --fix",
         "cmmi:analyze": "npx cmmi-specs-mcp analyze .",
-        "cmmi:validate": "npx cmmi-specs-mcp validate"
+        "cmmi:validate": "npx cmmi-specs-mcp validate",
+        "cmmi:start": "npx cmmi-specs-mcp start"
       },
-      keywords: ["cmmi", "project", config.projectType],
+      keywords: ["cmmi", "project", config.projectType, `cmmi-l${config.cmmLevel || 3}`],
       devDependencies: {
-        "cmmi-specs-mcp": "latest"
+        "cmmi-specs-mcp": "latest",
+        "@types/node": "^20.0.0",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "eslint": "^8.0.0",
+        "jest": "^29.0.0",
+        "ts-jest": "^29.0.0",
+        "ts-node": "^10.0.0",
+        "typescript": "^5.0.0"
+      },
+      engines: {
+        "node": ">=18.0.0"
       }
     };
 
@@ -288,6 +311,53 @@ npm start
 *项目由 [CMMI Specs Agent](https://github.com/pjy998/cmmi-specs-agent) 智能生成*
 `;
     fs.writeFileSync(path.join(baseDir, 'README.md'), readme);
+
+    // 创建基础 src/index.ts
+    const srcDir = path.join(baseDir, 'src');
+    const indexTs = `/**
+ * ${config.projectName} - CMMI L${config.cmmLevel || 3} 项目入口
+ * 
+ * 本文件是项目的主入口点，遵循 CMMI Level ${config.cmmLevel || 3} 标准。
+ */
+
+export function main(): void {
+  console.log('🚀 ${config.projectName} 项目启动');
+  console.log('📋 CMMI Level ${config.cmmLevel || 3} 标准项目');
+  
+  // TODO: 实现项目核心逻辑
+}
+
+// 如果直接运行此文件，则执行main函数
+if (import.meta.url === \`file://\${process.argv[1]}\`) {
+  main();
+}
+
+export default main;
+`;
+    fs.writeFileSync(path.join(srcDir, 'index.ts'), indexTs);
+
+    // 创建基础测试文件
+    const testsDir = path.join(baseDir, 'tests');
+    const indexTest = `/**
+ * ${config.projectName} - 基础测试文件
+ * 遵循 CMMI Level ${config.cmmLevel || 3} 测试标准
+ */
+
+import { main } from '../src/index';
+
+describe('${config.projectName} 基础功能测试', () => {
+  it('应该能够正常启动', () => {
+    // 测试主函数不抛出异常
+    expect(() => main()).not.toThrow();
+  });
+
+  it('应该符合 CMMI L${config.cmmLevel || 3} 标准', () => {
+    // TODO: 添加CMMI合规性检查
+    expect(true).toBe(true);
+  });
+});
+`;
+    fs.writeFileSync(path.join(testsDir, 'index.test.ts'), indexTest);
   }
 
   /**
@@ -608,6 +678,146 @@ npx cmmi-specs-mcp init .
     }
     
     return files;
+  }
+
+  /**
+   * 生成构建配置文件
+   */
+  private static async generateBuildConfiguration(config: ProjectCreationConfig): Promise<void> {
+    logger.info('🔧 生成构建配置文件...');
+    
+    const baseDir = config.targetDirectory;
+
+    // TypeScript配置
+    const tsConfig = {
+      compilerOptions: {
+        target: "ES2020",
+        module: "ESNext",
+        moduleResolution: "node",
+        outDir: "./dist",
+        rootDir: "./src",
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+        declaration: true,
+        declarationMap: true,
+        sourceMap: true
+      },
+      include: ["src/**/*"],
+      exclude: ["node_modules", "dist", "tests"]
+    };
+
+    fs.writeFileSync(
+      path.join(baseDir, 'tsconfig.json'),
+      JSON.stringify(tsConfig, null, 2)
+    );
+
+    // ESLint配置
+    const eslintConfig = {
+      env: {
+        es2021: true,
+        node: true
+      },
+      extends: [
+        "eslint:recommended",
+        "@typescript-eslint/recommended"
+      ],
+      parser: "@typescript-eslint/parser",
+      parserOptions: {
+        ecmaVersion: 12,
+        sourceType: "module"
+      },
+      plugins: ["@typescript-eslint"],
+      rules: {
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/no-explicit-any": "warn",
+        "prefer-const": "error",
+        "no-var": "error"
+      }
+    };
+
+    fs.writeFileSync(
+      path.join(baseDir, '.eslintrc.json'),
+      JSON.stringify(eslintConfig, null, 2)
+    );
+
+    // Jest测试配置
+    const jestConfig = {
+      preset: "ts-jest",
+      testEnvironment: "node",
+      roots: ["<rootDir>/src", "<rootDir>/tests"],
+      testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+      collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
+      coverageDirectory: "coverage",
+      coverageReporters: ["text", "lcov", "html"],
+      coverageThreshold: {
+        global: {
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
+        }
+      }
+    };
+
+    fs.writeFileSync(
+      path.join(baseDir, 'jest.config.js'),
+      `module.exports = ${JSON.stringify(jestConfig, null, 2)};`
+    );
+
+    // GitHub Actions CI/CD配置
+    const ciDir = path.join(baseDir, '.github', 'workflows');
+    fs.mkdirSync(ciDir, { recursive: true });
+
+    const ciConfig = `name: CMMI Project CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js \${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: \${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint code
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm run test
+    
+    - name: CMMI compliance check
+      run: npm run cmmi:validate
+    
+    - name: Build project
+      run: npm run build
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: matrix.node-version == '20.x'
+`;
+
+    fs.writeFileSync(path.join(ciDir, 'ci.yml'), ciConfig);
+
+    logger.info('✅ 构建配置文件生成完成');
   }
 }
 
