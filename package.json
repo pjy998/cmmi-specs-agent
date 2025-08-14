@@ -1,6 +1,6 @@
 {
   "name": "cmmi-specs-mcp",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "基于MCP协议的CMMI规范智能代理系统，实现VS Code Copilot Chat集成与多语言文档生成",
   "type": "module",
   "main": "dist/server.js",
