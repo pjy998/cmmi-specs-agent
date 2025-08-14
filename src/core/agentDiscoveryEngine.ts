@@ -59,14 +59,22 @@ export class AgentDiscoveryEngine {
       // 1. 检测现有agents
       const existingAgents = await this.detectExistingAgents(projectPath);
       
-      // 2. 分析工作流定义
+      // 2. 分析agent间依赖关系
+      const dependencyGraph = await this.analyzeDependencyRelationships(existingAgents);
+      
+      // 3. 分析工作流定义
       const workflowDefinition = await this.analyzeWorkflowDefinition(existingAgents);
       
-      // 3. 识别缺失的agents
+      // 4. 识别缺失的agents
       const missingAgents = await this.identifyMissingAgents(existingAgents, workflowDefinition);
       
-      // 4. 生成推荐建议
-      const recommendations = await this.generateRecommendations(existingAgents, missingAgents, projectPath);
+      // 5. 生成智能推荐建议
+      const recommendations = await this.generateIntelligentRecommendations(
+        existingAgents, 
+        missingAgents, 
+        projectPath,
+        dependencyGraph
+      );
       
       const result: AgentDiscoveryResult = {
         existing_agents: existingAgents,
@@ -75,13 +83,330 @@ export class AgentDiscoveryEngine {
         recommendations: recommendations
       };
       
-      logger.info(`✅ Agent发现完成: 现有${existingAgents.length}个, 缺失${missingAgents.length}个`);
+      logger.info(`✅ Agent发现完成: 现有${existingAgents.length}个, 缺失${missingAgents.length}个, 推荐${recommendations.length}个`);
       return result;
       
     } catch (error) {
       logger.error('❌ Agent发现失败:', error);
       throw error;
     }
+  }
+
+  /**
+   * 分析Agent间依赖关系 - 新增功能
+   */
+  private static async analyzeDependencyRelationships(agents: AgentConfig[]): Promise<Map<string, string[]>> {
+    logger.info('🔗 分析Agent依赖关系...');
+    
+    const dependencyGraph = new Map<string, string[]>();
+    
+    for (const agent of agents) {
+      const dependencies: string[] = [];
+      
+      // 从agent配置中解析依赖关系
+      if (agent.dependencies) {
+        for (const dep of agent.dependencies) {
+          if (typeof dep === 'string') {
+            dependencies.push(dep);
+          } else if (dep && typeof dep === 'object' && 'agent' in dep) {
+            // 处理复杂依赖关系对象
+            dependencies.push((dep as any).agent);
+          }
+        }
+      }
+      
+      // 从工作流配置中解析依赖
+      if (agent.workflow && 'prerequisites' in agent.workflow) {
+        const prerequisites = (agent.workflow as any).prerequisites;
+        if (Array.isArray(prerequisites)) {
+          dependencies.push(...prerequisites);
+        }
+      }
+      
+      // 基于CMMI标准的隐式依赖关系
+      const implicitDeps = this.inferImplicitDependencies(agent);
+      dependencies.push(...implicitDeps);
+      
+      dependencyGraph.set(agent.name, [...new Set(dependencies)]);
+      
+      if (dependencies.length > 0) {
+        logger.info(`📊 ${agent.name} 依赖: ${dependencies.join(', ')}`);
+      }
+    }
+    
+    return dependencyGraph;
+  }
+
+  /**
+   * 推断基于CMMI标准的隐式依赖关系
+   */
+  private static inferImplicitDependencies(agent: AgentConfig): string[] {
+    const dependencies: string[] = [];
+    
+    // 基于CMMI L3标准的典型依赖关系
+    switch (agent.name) {
+      case 'design-agent':
+        dependencies.push('requirements-agent');
+        break;
+      case 'coding-agent':
+        dependencies.push('design-agent', 'requirements-agent');
+        break;
+      case 'test-agent':
+        dependencies.push('coding-agent', 'design-agent', 'requirements-agent');
+        break;
+      case 'spec-agent':
+        // 流程协调器通常依赖所有其他agent的输出
+        dependencies.push('requirements-agent', 'design-agent', 'coding-agent', 'test-agent', 'tasks-agent');
+        break;
+    }
+    
+    return dependencies;
+  }
+
+  /**
+   * 增强的智能推荐生成 - 替代原有方法
+   */
+  private static async generateIntelligentRecommendations(
+    existingAgents: AgentConfig[],
+    missingAgents: string[],
+    projectPath: string,
+    dependencyGraph: Map<string, string[]>
+  ): Promise<AgentRecommendation[]> {
+    logger.info('🧠 生成智能推荐建议...');
+    
+    const recommendations: AgentRecommendation[] = [];
+    
+    // 分析项目类型和技术栈
+    const projectType = await this.analyzeProjectType(projectPath);
+    const techStack = await this.analyzeTechStack(projectPath);
+    
+    // 为缺失的agents生成推荐
+    for (const missingAgent of missingAgents) {
+      const recommendation = this.generateAgentRecommendation(
+        missingAgent,
+        existingAgents,
+        projectType,
+        techStack,
+        dependencyGraph
+      );
+      
+      if (recommendation) {
+        recommendations.push(recommendation);
+      }
+    }
+    
+    // 分析现有agents的配置完整性
+    for (const agent of existingAgents) {
+      const completenessIssues = this.analyzeAgentCompleteness(agent);
+      
+      if (completenessIssues.length > 0) {
+        recommendations.push({
+          agent_name: `${agent.name}-enhancement`,
+          reason: `改进${agent.title}: ${completenessIssues.join(', ')}`,
+          priority: 'medium',
+          dependencies: []
+        });
+      }
+    }
+    
+    // 基于依赖关系推荐优化
+    const optimizationRecs = this.analyzeOptimizationOpportunities(dependencyGraph, existingAgents);
+    recommendations.push(...optimizationRecs);
+    
+    return recommendations;
+  }
+
+  /**
+   * 分析项目类型
+   */
+  private static async analyzeProjectType(projectPath: string): Promise<string> {
+    // 检查package.json
+    const packageJsonPath = path.join(projectPath, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      try {
+        const packageContent = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        if (packageContent.dependencies) {
+          if (packageContent.dependencies.react) return 'react-app';
+          if (packageContent.dependencies.vue) return 'vue-app';
+          if (packageContent.dependencies.express) return 'nodejs-api';
+          if (packageContent.dependencies['@types/node']) return 'nodejs-app';
+        }
+      } catch (error) {
+        logger.warn('解析package.json失败:', error);
+      }
+    }
+    
+    // 检查其他项目标识
+    if (fs.existsSync(path.join(projectPath, 'requirements.txt'))) return 'python-app';
+    if (fs.existsSync(path.join(projectPath, 'pom.xml'))) return 'java-app';
+    if (fs.existsSync(path.join(projectPath, 'go.mod'))) return 'go-app';
+    
+    return 'unknown';
+  }
+
+  /**
+   * 分析技术栈
+   */
+  private static async analyzeTechStack(projectPath: string): Promise<string[]> {
+    const techStack: string[] = [];
+    
+    // 从文件类型推断
+    try {
+      const files = fs.readdirSync(projectPath);
+      if (files.some(f => f.endsWith('.ts') || f.endsWith('.tsx'))) techStack.push('typescript');
+      if (files.some(f => f.endsWith('.js') || f.endsWith('.jsx'))) techStack.push('javascript');
+      if (files.some(f => f.endsWith('.py'))) techStack.push('python');
+      if (files.some(f => f.endsWith('.java'))) techStack.push('java');
+      if (files.some(f => f.endsWith('.go'))) techStack.push('golang');
+      if (files.some(f => f.endsWith('.yaml') || f.endsWith('.yml'))) techStack.push('yaml');
+    } catch (error) {
+      logger.warn('分析技术栈失败:', error);
+    }
+    
+    return techStack;
+  }
+
+  /**
+   * 为特定Agent生成推荐 - 统一版本
+   */
+  private static generateAgentRecommendation(
+    agentName: string,
+    existingAgents: AgentConfig[],
+    projectType: string,
+    techStack: string[],
+    dependencyGraph: Map<string, string[]>
+  ): AgentRecommendation | null {
+    const standardAgents = {
+      'requirements-agent': {
+        reason: '需求分析是CMMI L3的必需过程，缺少需求管理会影响项目质量',
+        priority: 'high' as const,
+        dependencies: []
+      },
+      'design-agent': {
+        reason: '系统设计确保技术方案满足需求，是架构设计的核心',
+        priority: 'high' as const,
+        dependencies: ['requirements-agent']
+      },
+      'coding-agent': {
+        reason: '代码实现和审查确保编码质量和标准符合性',
+        priority: 'medium' as const,
+        dependencies: ['design-agent', 'requirements-agent']
+      },
+      'test-agent': {
+        reason: '测试策略和执行确保产品质量，验证需求满足情况',
+        priority: 'high' as const,
+        dependencies: ['coding-agent', 'design-agent']
+      },
+      'tasks-agent': {
+        reason: '项目管理和任务分解确保项目按计划进行',
+        priority: 'medium' as const,
+        dependencies: []
+      },
+      'spec-agent': {
+        reason: '流程协调确保所有agents按CMMI标准协作',
+        priority: 'low' as const,
+        dependencies: ['requirements-agent', 'design-agent', 'coding-agent', 'test-agent']
+      }
+    };
+    
+    return standardAgents[agentName as keyof typeof standardAgents] ? {
+      agent_name: agentName,
+      ...standardAgents[agentName as keyof typeof standardAgents]
+    } : null;
+  }
+
+  /**
+   * 分析agent配置完整性
+   */
+  private static analyzeAgentCompleteness(agent: AgentConfig): string[] {
+    const issues: string[] = [];
+    
+    if (!agent.capabilities || agent.capabilities.length === 0) {
+      issues.push('缺少能力定义');
+    }
+    
+    if (!agent.workflow) {
+      issues.push('缺少工作流配置');
+    }
+    
+    if (!agent.dependencies || agent.dependencies.length === 0) {
+      issues.push('缺少依赖关系定义');
+    }
+    
+    return issues;
+  }
+
+  /**
+   * 分析优化机会
+   */
+  private static analyzeOptimizationOpportunities(
+    dependencyGraph: Map<string, string[]>,
+    existingAgents: AgentConfig[]
+  ): AgentRecommendation[] {
+    const recommendations: AgentRecommendation[] = [];
+    
+    // 检查循环依赖
+    const cyclicDeps = this.detectCyclicDependencies(dependencyGraph);
+    if (cyclicDeps.length > 0) {
+      recommendations.push({
+        agent_name: 'dependency-optimization',
+        reason: `检测到循环依赖: ${cyclicDeps.join(' -> ')}，建议重构依赖关系`,
+        priority: 'high',
+        dependencies: []
+      });
+    }
+    
+    // 检查孤立的agents
+    const isolatedAgents = this.findIsolatedAgents(dependencyGraph, existingAgents);
+    for (const isolated of isolatedAgents) {
+      recommendations.push({
+        agent_name: `${isolated}-integration`,
+        reason: `${isolated} 缺少与其他agents的协作关系，建议增加集成`,
+        priority: 'low',
+        dependencies: []
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * 检测循环依赖
+   */
+  private static detectCyclicDependencies(dependencyGraph: Map<string, string[]>): string[] {
+    // 简化的循环依赖检测
+    for (const [agent, deps] of dependencyGraph) {
+      for (const dep of deps) {
+        const depDeps = dependencyGraph.get(dep);
+        if (depDeps && depDeps.includes(agent)) {
+          return [agent, dep, agent];
+        }
+      }
+    }
+    return [];
+  }
+
+  /**
+   * 找到孤立的agents
+   */
+  private static findIsolatedAgents(
+    dependencyGraph: Map<string, string[]>,
+    existingAgents: AgentConfig[]
+  ): string[] {
+    const connected = new Set<string>();
+    
+    // 收集所有有连接的agents
+    for (const [agent, deps] of dependencyGraph) {
+      if (deps.length > 0) {
+        connected.add(agent);
+        deps.forEach(dep => connected.add(dep));
+      }
+    }
+    
+    // 找到没有连接的agents
+    return existingAgents
+      .map(agent => agent.name)
+      .filter(name => !connected.has(name));
   }
   
   /**
@@ -202,7 +527,8 @@ export class AgentDiscoveryEngine {
   }
   
   /**
-   * 生成智能推荐建议
+  /**
+   * 生成智能推荐建议 (已弃用 - 由generateIntelligentRecommendations替代)
    */
   private static async generateRecommendations(
     existingAgents: AgentConfig[],
@@ -210,102 +536,7 @@ export class AgentDiscoveryEngine {
     projectPath: string
   ): Promise<AgentRecommendation[]> {
     
-    const recommendations: AgentRecommendation[] = [];
-    
-    // 基于项目类型分析推荐优先级
-    const projectAnalysis = await this.analyzeProjectContext(projectPath);
-    
-    for (const missingAgent of missingAgents) {
-      const recommendation = this.generateAgentRecommendation(missingAgent, projectAnalysis, existingAgents);
-      recommendations.push(recommendation);
-    }
-    
-    // 按优先级排序
-    recommendations.sort((a, b) => {
-      const priorities = { 'high': 3, 'medium': 2, 'low': 1 };
-      return priorities[b.priority] - priorities[a.priority];
-    });
-    
-    return recommendations;
-  }
-  
-  /**
-   * 分析项目上下文
-   */
-  private static async analyzeProjectContext(projectPath: string): Promise<any> {
-    const context = {
-      has_package_json: fs.existsSync(path.join(projectPath, 'package.json')),
-      has_readme: fs.existsSync(path.join(projectPath, 'README.md')),
-      has_src_dir: fs.existsSync(path.join(projectPath, 'src')),
-      has_test_dir: fs.existsSync(path.join(projectPath, 'test')) || fs.existsSync(path.join(projectPath, 'tests')),
-      project_type: 'general'
-    };
-    
-    // 判断项目类型
-    if (context.has_package_json) {
-      context.project_type = 'javascript';
-    } else if (fs.existsSync(path.join(projectPath, 'pom.xml'))) {
-      context.project_type = 'java';
-    } else if (fs.existsSync(path.join(projectPath, 'requirements.txt'))) {
-      context.project_type = 'python';
-    }
-    
-    return context;
-  }
-  
-  /**
-   * 为特定Agent生成推荐
-   */
-  private static generateAgentRecommendation(
-    agentName: string, 
-    projectContext: any, 
-    existingAgents: AgentConfig[]
-  ): AgentRecommendation {
-    
-    const recommendations: Record<string, AgentRecommendation> = {
-      'requirements-agent': {
-        agent_name: 'requirements-agent',
-        reason: '需求分析是CMMI L3的基础过程域，必须建立完整的需求管理',
-        priority: 'high',
-        dependencies: []
-      },
-      'design-agent': {
-        agent_name: 'design-agent',
-        reason: '技术解决方案设计确保需求可实现性',
-        priority: 'high', 
-        dependencies: ['requirements-agent']
-      },
-      'coding-agent': {
-        agent_name: 'coding-agent',
-        reason: '代码实现是核心交付物',
-        priority: 'medium',
-        dependencies: ['design-agent']
-      },
-      'test-agent': {
-        agent_name: 'test-agent',
-        reason: '验证与确认确保质量符合要求',
-        priority: 'high',
-        dependencies: ['coding-agent']
-      },
-      'tasks-agent': {
-        agent_name: 'tasks-agent',
-        reason: '项目监控和管理确保按计划执行',
-        priority: 'medium',
-        dependencies: []
-      },
-      'spec-agent': {
-        agent_name: 'spec-agent',
-        reason: '流程协调器确保CMMI流程完整执行',
-        priority: 'high',
-        dependencies: ['requirements-agent', 'design-agent', 'coding-agent', 'test-agent']
-      }
-    };
-    
-    return recommendations[agentName] || {
-      agent_name: agentName,
-      reason: '标准CMMI L3流程建议',
-      priority: 'low',
-      dependencies: []
-    };
+    // 使用新的智能推荐生成方法
+    return this.generateIntelligentRecommendations(existingAgents, missingAgents, projectPath, new Map());
   }
 }

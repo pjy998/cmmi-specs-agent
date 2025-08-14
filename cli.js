@@ -39,20 +39,23 @@ function showHelp() {
   console.log('  npx cmmi-specs-mcp <command> [options]');
   console.log('');
   console.log('命令:');
-  console.log('  help       显示帮助信息');
-  console.log('  version    显示版本信息');
-  console.log('  config     显示配置信息');
-  console.log('  install    安装MCP服务器');
-  console.log('  install-vscode  安装VS Code配置');
-  console.log('  start      启动MCP服务器');
-  console.log('  build      构建项目');
-  console.log('  test       运行测试');
-  console.log('  validate   验证配置');
+  console.log('  help                显示帮助信息');
+  console.log('  version             显示版本信息');
+  console.log('  config              显示配置信息');
+  console.log('  install             安装MCP服务器');
+  console.log('  install-vscode      安装VS Code配置');
+  console.log('  start               启动MCP服务器');
+  console.log('  build               构建项目');
+  console.log('  test                运行测试');
+  console.log('  validate            验证配置');
+  console.log('  init <directory>    在指定目录初始化CMMI项目');
+  console.log('  analyze <directory> 分析指定目录的agent配置');
   console.log('');
   console.log('示例:');
   console.log('  npx cmmi-specs-mcp install');
   console.log('  npx cmmi-specs-mcp start');
-  console.log('  npx cmmi-specs-mcp test');
+  console.log('  npx cmmi-specs-mcp init ./my-project');
+  console.log('  npx cmmi-specs-mcp analyze ./existing-project');
 }
 
 function showConfig() {
@@ -156,10 +159,95 @@ async function validate() {
   }
 }
 
+async function initProject(targetDir) {
+  if (!targetDir) {
+    log('red', '❌ 请指定目标目录');
+    console.log('用法: npx cmmi-specs-mcp init <directory>');
+    process.exit(1);
+  }
+
+  log('blue', `🚀 在目录 ${targetDir} 初始化CMMI项目...`);
+  try {
+    // 调用内置的项目初始化功能
+    await runCommand('node', ['-e', `
+      import('./dist/core/workflowOrchestrator.js').then(module => {
+        const { WorkflowOrchestrator } = module;
+        return WorkflowOrchestrator.executeIntelligentProjectInitialization('${targetDir}', {
+          projectName: '${targetDir.split('/').pop()}',
+          projectType: 'cmmi-standard',
+          initMode: 'cli'
+        });
+      }).then(result => {
+        console.log('\\n🎉 项目初始化结果:');
+        console.log('✅ 成功:', result.success);
+        console.log('📝 消息:', result.message);
+        console.log('📁 路径:', result.project_path);
+        console.log('⏱️ 耗时:', result.duration + 'ms');
+        if (!result.success) {
+          process.exit(1);
+        }
+      }).catch(error => {
+        console.error('❌ 初始化失败:', error.message);
+        process.exit(1);
+      });
+    `]);
+    log('green', '✅ 项目初始化完成');
+  } catch (error) {
+    log('red', `❌ 项目初始化失败: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+async function analyzeProject(targetDir) {
+  if (!targetDir) {
+    log('red', '❌ 请指定要分析的目录');
+    console.log('用法: npx cmmi-specs-mcp analyze <directory>');
+    process.exit(1);
+  }
+
+  log('blue', `🔍 分析目录 ${targetDir} 的agent配置...`);
+  try {
+    // 调用Agent发现引擎
+    await runCommand('node', ['-e', `
+      import('./dist/core/agentDiscoveryEngine.js').then(module => {
+        const { AgentDiscoveryEngine } = module;
+        return AgentDiscoveryEngine.discoverAgents('${targetDir}');
+      }).then(result => {
+        console.log('\\n📊 Agent发现分析结果:');
+        console.log('✅ 现有Agents:', result.existing_agents.length + '个');
+        
+        result.existing_agents.forEach((agent, index) => {
+          console.log('  ' + (index + 1) + '. ' + agent.name + ' (' + agent.title + ')');
+          console.log('     能力: ' + agent.capabilities.join(', '));
+        });
+        
+        console.log('\\n❌ 缺失Agents:', result.missing_agents.length + '个');
+        if (result.missing_agents.length > 0) {
+          console.log('   ' + result.missing_agents.join(', '));
+        }
+        
+        console.log('\\n💡 推荐建议:', result.recommendations.length + '个');
+        result.recommendations.forEach((rec, index) => {
+          console.log('  ' + (index + 1) + '. ' + rec.agent_name + ' (优先级: ' + rec.priority + ')');
+          console.log('     原因: ' + rec.reason);
+        });
+      }).catch(error => {
+        console.error('❌ 分析失败:', error.message);
+        process.exit(1);
+      });
+    `]);
+    log('green', '✅ 分析完成');
+  } catch (error) {
+    log('red', `❌ 分析失败: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 // 主函数
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
+  const targetDir = args[1];
 
   if (!command || command === 'help' || command === '-h' || command === '--help') {
     showHelp();
@@ -199,6 +287,14 @@ async function main() {
 
     case 'config':
       showConfig();
+      break;
+
+    case 'init':
+      await initProject(targetDir);
+      break;
+
+    case 'analyze':
+      await analyzeProject(targetDir);
       break;
 
     default:
