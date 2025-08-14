@@ -280,9 +280,31 @@ class OptimizedMultiAgentOrchestratorServer {
    */
   private getDefaultProjectPath(): string {
     if (this.clientRoots.length > 0) {
-      return this.clientRoots[0];
+      // 如果是file:// URI，提取路径
+      let rootPath = this.clientRoots[0];
+      if (rootPath.startsWith('file://')) {
+        rootPath = rootPath.replace('file://', '');
+      }
+      return rootPath;
     }
-    return process.cwd();
+
+    // 检查环境变量中是否有VS Code工作区路径
+    const vscodeWorkspace = process.env['VSCODE_WORKSPACE'] || process.env['PWD'];
+    if (vscodeWorkspace && !vscodeWorkspace.includes('/_npx/') && !vscodeWorkspace.includes('/.npm/')) {
+      return vscodeWorkspace;
+    }
+
+    // 检查当前工作目录是否是npm临时目录
+    const currentDir = process.cwd();
+    const isNpmTempDir = currentDir.includes('/_npx/') || currentDir.includes('/.npm/');
+    
+    if (isNpmTempDir) {
+      // 如果在npm临时目录中，尝试使用用户主目录
+      const os = require('os');
+      return os.homedir();
+    }
+
+    return currentDir;
   }
 
   /**

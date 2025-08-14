@@ -18,10 +18,24 @@ export class UnifiedToolHandlers {
    */
   static async manageAgent(args: Record<string, unknown>): Promise<any> {
     try {
-      const action = args['action'] as string;
+      const action = args['action'] as string || 'init_cmmi'; // 默认动作
       logger.info(`🤖 Agent management action: ${action}`);
 
-      switch (action) {
+      // 如果没有明确指定action，但有其他参数，推断action
+      if (!args['action']) {
+        if (args['name'] || args['description']) {
+          args['action'] = 'create';
+          logger.info('🎯 Inferred action: create (based on name/description parameters)');
+        } else if (args['task_content']) {
+          args['action'] = 'generate_smart';
+          logger.info('🎯 Inferred action: generate_smart (based on task_content parameter)');
+        } else {
+          args['action'] = 'init_cmmi';
+          logger.info('🎯 Default action: init_cmmi (no specific parameters provided)');
+        }
+      }
+
+      switch (args['action'] as string) {
         case 'list':
           return await this.listAgents(args);
         case 'create':
@@ -31,7 +45,7 @@ export class UnifiedToolHandlers {
         case 'init_cmmi':
           return await this.initCMMIAgents(args);
         default:
-          throw new Error(`Unknown action: ${action}`);
+          throw new Error(`Unknown action: ${args['action']}`);
       }
 
     } catch (error) {
@@ -151,7 +165,16 @@ export class UnifiedToolHandlers {
 
     // 智能查找agents目录，考虑项目路径
     const agentsDir = this.findAgentsDirectory(projectPath);
+    
+    // 调试信息
+    logger.info(`📂 Agent creation details:`);
+    logger.info(`   Name: ${name}`);
+    logger.info(`   Project Path: ${projectPath || 'not specified'}`);
+    logger.info(`   Agents Directory: ${agentsDir}`);
+    logger.info(`   Directory exists: ${fs.existsSync(agentsDir)}`);
+    
     if (!fs.existsSync(agentsDir)) {
+      logger.info(`📁 Creating agents directory: ${agentsDir}`);
       fs.mkdirSync(agentsDir, { recursive: true });
     }
 
@@ -223,24 +246,62 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
   private static findAgentsDirectory(projectPath?: string): string {
     // 如果指定了项目路径，优先在项目路径中查找
     if (projectPath) {
+      // 如果是file:// URI，提取路径
+      if (projectPath.startsWith('file://')) {
+        projectPath = projectPath.replace('file://', '');
+      }
       const projectAgentsDir = path.join(projectPath, 'agents');
       return projectAgentsDir; // 直接返回项目路径下的agents目录，如果不存在会自动创建
     }
 
+    // 检查当前工作目录是否是npm临时目录
+    const currentDir = process.cwd();
+    const isNpmTempDir = currentDir.includes('/_npx/') || currentDir.includes('/.npm/');
+    
+    if (isNpmTempDir) {
+      // 如果在npm临时目录中，尝试使用用户主目录下的agents目录
+      const os = require('os');
+      const homeDir = os.homedir();
+      const homeAgentsDir = path.join(homeDir, 'cmmi-agents');
+      
+      // 如果主目录agents目录不存在，创建它
+      if (!fs.existsSync(homeAgentsDir)) {
+        try {
+          fs.mkdirSync(homeAgentsDir, { recursive: true });
+          // 创建一个说明文件
+          const readmePath = path.join(homeAgentsDir, 'README.md');
+          const readmeContent = `# CMMI Agents Directory
+
+This directory contains AI agents created by the CMMI Specs MCP tool.
+
+Agents are created here when running from npm temporary directories.
+You can move these files to your project's 'agents' directory if needed.
+
+Created at: ${new Date().toISOString()}
+`;
+          fs.writeFileSync(readmePath, readmeContent, 'utf8');
+        } catch (error) {
+          // 如果无法创建主目录agents，回退到当前目录
+          console.error('Failed to create home agents directory:', error);
+        }
+      }
+      return homeAgentsDir;
+    }
+
     // 首先尝试当前目录
-    let agentsDir = path.join(process.cwd(), 'agents');
+    let agentsDir = path.join(currentDir, 'agents');
     if (fs.existsSync(agentsDir)) {
       return agentsDir;
     }
 
     // 尝试上级目录（从mcp-server向上查找）
-    agentsDir = path.join(process.cwd(), '..', 'agents');
+    agentsDir = path.join(currentDir, '..', 'agents');
     if (fs.existsSync(agentsDir)) {
       return agentsDir;
     }
 
-    // 如果都找不到，返回默认路径
-    return path.join(process.cwd(), 'agents');
+    // 如果都找不到，返回当前目录下的agents目录
+    return path.join(currentDir, 'agents');
   }
 
   /**
@@ -467,6 +528,8 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
     ];
 
     const createdAgents = [];
+    const existingAgents = [];
+    
     for (const agentSpec of standardAgents) {
       try {
         const result = await this.createAgent({
@@ -479,19 +542,31 @@ ${capabilities.map(cap => `- ${cap}`).join('\n')}
         
         if (result.success) {
           createdAgents.push(agentSpec.name);
+          logger.info(`✅ Created new agent: ${agentSpec.name}`);
         }
       } catch (error) {
-        logger.warn(`Failed to create agent ${agentSpec.name}: ${error instanceof Error ? error.message : String(error)}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('already exists')) {
+          // 如果文件已经存在，认为是成功的
+          existingAgents.push(agentSpec.name);
+          logger.info(`📄 Agent already exists: ${agentSpec.name}`);
+        } else {
+          logger.warn(`❌ Failed to create agent ${agentSpec.name}: ${errorMessage}`);
+        }
       }
     }
+
+    const totalManagedAgents = createdAgents.length + existingAgents.length;
 
     return {
       success: true,
       action: 'init_cmmi',
-      initialized_agents: createdAgents,
+      initialized_agents: [...createdAgents, ...existingAgents],
+      newly_created_agents: createdAgents,
+      existing_agents: existingAgents,
       created_files: createdAgents.map(name => `${name}.yaml`),
       agents_directory: projectPath ? path.join(projectPath, 'agents') : this.findAgentsDirectory(),
-      message: `CMMI agent initialization completed. Created ${createdAgents.length}/${standardAgents.length} agents`,
+      message: `CMMI agent initialization completed. Created ${createdAgents.length} new agents, found ${existingAgents.length} existing agents. Total: ${totalManagedAgents}/${standardAgents.length} agents available.`,
       timestamp: new Date().toISOString()
     };
   }
