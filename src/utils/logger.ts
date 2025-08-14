@@ -14,13 +14,13 @@ const logFormat = printf(({ level, message, timestamp, ...meta }) => {
 
 // Create logger instance - MCP 服务器默认只记录到文件，避免污染 stdout
 export const logger = winston.createLogger({
-  level: process.env['LOG_LEVEL'] || 'error', // 默认只记录错误，减少日志噪音
+  level: process.env['LOG_LEVEL'] || 'info', // 提高默认日志级别以便记录业务信息
   format: combine(
     errors({ stack: true }),
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     logFormat
   ),
-  defaultMeta: { service: 'copilot-multi-agent-orchestrator' },
+  defaultMeta: { service: 'cmmi-specs-mcp' },
   transports: [
     // File transport for errors
     new winston.transports.File({

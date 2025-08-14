@@ -19,6 +19,7 @@ import {
   Milestone,
   AnalysisMetrics
 } from '../types/taskAnalyzer.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * 智能任务分析器
@@ -57,27 +58,27 @@ export class TaskAnalyzer implements ITaskAnalyzer {
     this.state.currentTaskId = taskId;
 
     try {
-      console.log(`🔍 开始分析任务: ${taskId}`);
+      logger.info(`🔍 开始分析任务: ${taskId}`);
 
       // 1. 解析需求
       const parsedRequirements = await this.parseRequirements(request.content);
-      console.log(`📋 解析到 ${parsedRequirements.length} 个需求`);
+      logger.info(`📋 解析到 ${parsedRequirements.length} 个需求`);
 
-      // 2. 评估复杂度
+            // 2. 复杂度评估
       const complexity = await this.assessComplexity(request.content, request.projectContext);
-      console.log(`🎯 复杂度评估: ${complexity.level} (${complexity.score})`);
+      logger.info(`🎯 复杂度评估: ${complexity.level} (${complexity.score})`);
 
-      // 3. 分类任务
+      // 3. 任务分类
       const category = this.categorizeTask(request.content, request.domain);
-      console.log(`📂 任务分类: ${category.primary} (${category.domain})`);
+      logger.info(`📂 任务分类: ${category.primary} (${category.domain})`);
 
-      // 4. 推荐代理
+      // 4. 代理推荐
       const recommendedAgents = await this.recommendAgents(parsedRequirements, category.domain);
-      console.log(`🤖 推荐 ${recommendedAgents.length} 个代理`);
+      logger.info(`🤖 推荐 ${recommendedAgents.length} 个代理`);
 
       // 5. 生成执行计划
       const executionPlan = await this.generateExecutionPlan(parsedRequirements, recommendedAgents);
-      console.log(`📅 生成执行计划: ${executionPlan.phases.length} 个阶段`);
+      logger.info(`📅 生成执行计划: ${executionPlan.phases.length} 个阶段`);
 
       // 6. 成本估算
       const estimatedCost = this.estimateCost(executionPlan, recommendedAgents);
@@ -121,11 +122,11 @@ export class TaskAnalyzer implements ITaskAnalyzer {
       this.state.performanceMetrics.push(metrics);
       this.state.completedAnalyses.push(result);
 
-      console.log(`✅ 任务分析完成: ${taskId} (${metrics.processingTime}ms)`);
+      logger.info(`✅ 任务分析完成: ${taskId} (${metrics.processingTime}ms)`);
       return result;
 
     } catch (error) {
-      console.error(`❌ 任务分析失败: ${taskId}`, error);
+      logger.error(`❌ 任务分析失败: ${taskId}`, error);
       throw error;
     } finally {
       this.state.isAnalyzing = false;
@@ -348,7 +349,7 @@ export class TaskAnalyzer implements ITaskAnalyzer {
       this.adjustEstimationFactors(feedback);
     }
 
-    console.log(`📚 收到任务 ${feedback.taskId} 的学习反馈`);
+    logger.info(`📚 收到任务 ${feedback.taskId} 的学习反馈`);
   }
 
   /**
@@ -362,7 +363,7 @@ export class TaskAnalyzer implements ITaskAnalyzer {
         const result = await this.analyzeTask(request);
         results.push(result);
       } catch (error) {
-        console.error('批量分析中的任务失败:', error);
+        logger.error('批量分析中的任务失败:', error);
       }
     }
 

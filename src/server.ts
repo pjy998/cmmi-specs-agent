@@ -124,13 +124,15 @@ class OptimizedMultiAgentOrchestratorServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       
-      // Log every tool call request with debug info
+      // Log tool call for business monitoring
+      logger.info(`🔧 Tool call received: ${name}`, { args });
+      
+      // Debug info for MCP protocol debugging (only when DEBUG_MODE is on)
       if (DEBUG_MODE) {
         console.error(`🔧 [DEBUG] Tool call: ${name}`);
         console.error(`📊 [DEBUG] Arguments:`, JSON.stringify(args, null, 2));
         console.error(`⏰ [DEBUG] Timestamp: ${new Date().toISOString()}`);
       }
-      logger.info(`🔧 Optimized tool call received: ${name}`, { args });
 
       // Ensure args is always an object
       const safeArgs = args || {};
@@ -140,10 +142,10 @@ class OptimizedMultiAgentOrchestratorServer {
         const defaultPath = this.getDefaultProjectPath();
         if (defaultPath !== process.cwd()) {
           safeArgs.project_path = defaultPath;
+          logger.info(`🎯 Auto-detected project path: ${safeArgs.project_path}`);
           if (DEBUG_MODE) {
             console.error(`🎯 [DEBUG] Auto-detected project path: ${safeArgs.project_path}`);
           }
-          logger.info(`🎯 Auto-detected project path from client workspace: ${safeArgs.project_path}`);
         }
       }
 
@@ -217,6 +219,10 @@ class OptimizedMultiAgentOrchestratorServer {
         // Format the response according to MCP protocol
         const executionTime = Date.now() - startTime;
         
+        // Business logging
+        logger.info(`✅ Tool ${name} completed successfully`, { executionTime, resultSize: JSON.stringify(result).length });
+        
+        // MCP protocol debug info
         if (DEBUG_MODE) {
           console.error(`✅ [DEBUG] Tool ${name} completed in ${executionTime}ms`);
           console.error(`📊 [DEBUG] Result size: ${JSON.stringify(result).length} characters`);
@@ -244,12 +250,14 @@ class OptimizedMultiAgentOrchestratorServer {
       } catch (error) {
         const executionTime = Date.now() - startTime;
         
+        // Business error logging
+        logger.error(`Tool ${name} execution failed:`, { error, executionTime });
+        
+        // MCP protocol debug info
         if (DEBUG_MODE) {
           console.error(`❌ [DEBUG] Tool ${name} failed after ${executionTime}ms`);
           console.error(`💥 [DEBUG] Error details:`, error);
         }
-        
-        logger.error(`Optimized tool execution error for ${name}:`, error);
         return {
           content: [
             {
@@ -326,12 +334,13 @@ class OptimizedMultiAgentOrchestratorServer {
       method: 'notifications/ready'
     });
     
-    // 连接成功日志
+    // 连接成功日志 (MCP协议要求通过stderr输出)
     console.error(`✅ CMMI Specs MCP Server v${PACKAGE_VERSION} connected and ready!`);
+    logger.info(`✅ Server v${PACKAGE_VERSION} connected and ready for requests`);
+    
     if (DEBUG_MODE) {
       console.error(`🔗 [DEBUG] Transport: StdioServerTransport`);
       console.error(`📡 [DEBUG] Ready notification sent to client`);
-      logger.info('✅ Optimized server connected and ready for requests');
     }
   }
 }
@@ -340,7 +349,9 @@ class OptimizedMultiAgentOrchestratorServer {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new OptimizedMultiAgentOrchestratorServer();
   server.start().catch((error) => {
+    // Critical startup errors should go to both stderr (for MCP) and business logs
     console.error('Failed to start optimized server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   });
 }

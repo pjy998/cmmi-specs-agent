@@ -178,34 +178,8 @@ export class UnifiedToolHandlers {
       fs.mkdirSync(agentsDir, { recursive: true });
     }
 
-    // 创建agent配置 - 使用标准化的instructions格式
-    const instructionsText = `你是${description || name}。
-
-能力范围：
-${capabilities.map(cap => `- ${cap}`).join('\n')}
-
-请根据用户需求提供专业的帮助和建议。`;
-
-    const agentConfig = {
-      version: 1,
-      name,
-      title: description || `${name} - AI助手`,
-      description: description || `专门处理${capabilities.join('、')}的AI助手`,
-      model,
-      color: this.generateRandomColor(),
-      language: 'zh-CN',
-      capabilities,
-      entrypoints: [
-        {
-          id: 'default',
-          description: `${name}的默认入口点`,
-          examples: [
-            `使用${name}处理${capabilities[0] || '任务'}`
-          ]
-        }
-      ],
-      instructions: instructionsText
-    };
+    // 创建完整的CMMI L3标准agent配置
+    const agentConfig = this.generateCMMICompliantAgent(name, description, capabilities, model);
 
     // 写入YAML文件，使用正确的多行格式
     const fileName = `${name}.yaml`;
@@ -282,7 +256,7 @@ Created at: ${new Date().toISOString()}
           fs.writeFileSync(readmePath, readmeContent, 'utf8');
         } catch (error) {
           // 如果无法创建主目录agents，回退到当前目录
-          console.error('Failed to create home agents directory:', error);
+          logger.error('Failed to create home agents directory:', error);
         }
       }
       return homeAgentsDir;
@@ -361,6 +335,337 @@ Created at: ${new Date().toISOString()}
         error: `YAML parsing error: ${error instanceof Error ? error.message : String(error)}` 
       };
     }
+  }
+
+  /**
+   * 生成符合CMMI L3标准的代理配置
+   */
+  private static generateCMMICompliantAgent(name: string, description: string, capabilities: string[], model: string): any {
+    // 根据代理类型生成专业的instructions
+    const instructionsText = this.generateCMMIInstructions(name, description, capabilities);
+    
+    // 推断代理在CMMI流程中的阶段
+    const workflowPhase = this.inferWorkflowPhase(name, capabilities);
+    
+    // 生成依赖关系
+    const dependencies = this.generateDependencies(name, workflowPhase);
+    
+    // 生成输出文档类型
+    const outputs = this.generateOutputs(name, capabilities);
+
+    return {
+      version: 1,
+      name,
+      title: description || `${name}专业代理`,
+      description: description || `负责${capabilities.join('、')}的专业代理`,
+      model,
+      color: this.generateAgentColor(name),
+      language: 'zh-CN',
+      capabilities,
+      workflow: {
+        phase: workflowPhase,
+        prerequisites: this.generatePrerequisites(workflowPhase),
+        outputs: outputs,
+        nextPhase: this.getNextPhase(workflowPhase)
+      },
+      dependencies: dependencies,
+      entrypoints: [
+        {
+          id: 'default',
+          description: `${description || name}的专业工作流程入口`,
+          examples: this.generateRealisticExamples(name, capabilities)
+        }
+      ],
+      instructions: instructionsText
+    };
+  }
+
+  /**
+   * 生成CMMI L3标准的详细instructions
+   */
+  private static generateCMMIInstructions(name: string, description: string, capabilities: string[]): string {
+    const roleName = description || name;
+    const primaryCapability = capabilities[0] || '专业服务';
+    
+    return `# CMMI Level 3 ${roleName}专业代理
+
+## 🎯 角色定义
+您是符合 CMMI Level 3 标准的${roleName}，负责执行${primaryCapability}相关的所有关键实践。您的使命是确保工作成果的完整性、一致性和可追溯性，为项目成功奠定坚实基础。
+
+## 📋 核心职责 (基于 CMMI 过程域)
+
+### 目标 1: ${capabilities[0] || '核心功能'}
+- **${capabilities[0] || '主要任务'}**: 确保${capabilities[0] || '工作成果'}的高质量完成
+- **标准化流程**: 遵循CMMI L3标准化过程和模板
+
+### 目标 2: 质量保证
+- **建立质量标准**: 基于CMMI要求建立详细的质量检查清单
+- **持续改进**: 基于反馈和度量不断改进过程
+
+### 目标 3: 协作和追溯
+- **跨功能协作**: 与其他代理密切配合，确保工作流顺畅
+- **文档追溯**: 维护完整的工作产品追溯关系
+
+## 🔧 工作流程和方法
+
+### 阶段一: 规划和准备
+1. **制定工作计划**
+   - 识别关键输入和依赖
+   - 选择适当的工具和技术
+   - 建立质量检查点
+   - 制定验证策略
+
+2. **准备工作环境**
+   - 收集必要的输入信息
+   - 设置工具和模板
+   - 建立沟通渠道
+   - 准备检查清单
+
+### 阶段二: 执行和实施
+1. **核心工作执行**
+   - 按照标准化流程执行任务
+   - 应用最佳实践和模板
+   - 记录关键决策和假设
+   - 维护工作产品质量
+
+2. **质量控制**
+   - 执行中间检查点
+   - 应用质量标准
+   - 收集反馈和度量
+   - 及时调整方法
+
+### 阶段三: 验证和交付
+1. **成果验证**
+   - 执行全面的质量检查
+   - 验证与需求的一致性
+   - 确认可交付成果完整性
+   - 获得相关方确认
+
+## 📊 质量标准和度量
+
+### 工作产品质量属性
+- **正确性**: 准确反映输入要求和标准
+- **完整性**: 包含所有必要信息和组件
+- **清晰性**: 表述明确无歧义，格式统一
+- **一致性**: 与其他工作产品无冲突
+- **可验证性**: 可设计验证方法，有明确验收标准
+- **可维护性**: 便于后续修改和扩展
+
+### 过程度量指标
+- **效率度量**: 任务完成时间、资源利用率
+- **质量度量**: 缺陷率、返工率、客户满意度
+- **符合性度量**: 标准遵循率、模板使用率
+
+## 📋 输出交付物规范
+
+### 标准文档结构
+\`\`\`markdown
+# [工作产品名称]
+
+## 1. 概述和目标
+- 文档目的和范围
+- 关键目标和成功标准
+- 相关标准和参考
+
+## 2. 输入分析
+- 输入文档分析
+- 约束条件识别
+- 依赖关系梳理
+
+## 3. ${capabilities[0] || '主要内容'}
+- 核心工作成果
+- 详细规格说明
+- 质量检查结果
+
+## 4. 验证和确认
+- 验证方法和结果
+- 相关方确认记录
+- 遗留问题和风险
+
+## 5. 追溯矩阵
+- 输入到输出的追溯
+- 质量要求到验证的追溯
+- 变更影响分析
+\`\`\`
+
+## 🎯 执行指南
+
+### 工作原则
+1. **标准驱动**: 所有活动必须符合CMMI L3标准
+2. **质量优先**: 确保工作产品的高质量和一致性
+3. **持续改进**: 基于反馈和度量不断改进过程
+4. **协作配合**: 与其他代理紧密协作，确保整体成功
+
+### 协作要求
+- 明确输入和输出接口
+- 维护工作产品的版本控制
+- 及时沟通状态和问题
+- 遵循变更管理流程
+
+### 🔍 技术验证和协作指南
+
+#### GitHub Copilot协作模式
+\`\`\`
+@workspace /search "${capabilities.join(' ')}"
+请Copilot协助验证相关技术和最佳实践
+\`\`\`
+
+#### 实时信息验证
+- 搜索相关技术的最新发展
+- 验证工具和方法的有效性
+- 确认标准和规范的时效性
+
+### 成功标准
+- 工作产品按时交付，质量达标
+- 相关方满意度高，缺陷率低
+- 追溯关系完整，覆盖率达标
+- 符合CMMI L3过程要求
+
+现在，请基于以上 CMMI Level 3 标准，执行您的专业职责。`;
+  }
+
+  /**
+   * 推断代理在CMMI工作流中的阶段
+   */
+  private static inferWorkflowPhase(name: string, capabilities: string[]): number {
+    const nameAndCaps = (name + ' ' + capabilities.join(' ')).toLowerCase();
+    
+    if (nameAndCaps.includes('需求') || nameAndCaps.includes('requirement')) return 0;
+    if (nameAndCaps.includes('设计') || nameAndCaps.includes('design')) return 1;
+    if (nameAndCaps.includes('编码') || nameAndCaps.includes('开发') || nameAndCaps.includes('代码')) return 2;
+    if (nameAndCaps.includes('测试') || nameAndCaps.includes('test')) return 3;
+    if (nameAndCaps.includes('任务') || nameAndCaps.includes('管理') || nameAndCaps.includes('task')) return 4;
+    if (nameAndCaps.includes('规格') || nameAndCaps.includes('文档') || nameAndCaps.includes('spec')) return 5;
+    
+    return 0; // 默认为需求阶段
+  }
+
+  /**
+   * 生成代理依赖关系
+   */
+  private static generateDependencies(name: string, phase: number): any[] {
+    const dependencies = [];
+    
+    // 基于阶段生成依赖关系
+    switch (phase) {
+      case 0: // 需求阶段
+        dependencies.push(
+          { type: "produces-for", agent: "design-agent", artifacts: ["requirements-document", "acceptance-criteria"] },
+          { type: "validates-with", agent: "test-agent", artifacts: ["acceptance-criteria", "test-scenarios"] }
+        );
+        break;
+      case 1: // 设计阶段
+        dependencies.push(
+          { type: "consumes-from", agent: "requirements-agent", artifacts: ["requirements-document"] },
+          { type: "produces-for", agent: "coding-agent", artifacts: ["design-document", "architecture-spec"] }
+        );
+        break;
+      case 2: // 编码阶段
+        dependencies.push(
+          { type: "consumes-from", agent: "design-agent", artifacts: ["design-document"] },
+          { type: "produces-for", agent: "test-agent", artifacts: ["source-code", "unit-tests"] }
+        );
+        break;
+      case 3: // 测试阶段
+        dependencies.push(
+          { type: "consumes-from", agent: "coding-agent", artifacts: ["source-code"] },
+          { type: "validates-with", agent: "requirements-agent", artifacts: ["test-results"] }
+        );
+        break;
+      default:
+        dependencies.push(
+          { type: "coordinates-with", agent: "all-agents", artifacts: ["status-reports", "metrics"] }
+        );
+    }
+    
+    return dependencies;
+  }
+
+  /**
+   * 生成输出文档类型
+   */
+  private static generateOutputs(name: string, capabilities: string[]): string[] {
+    const outputs = [];
+    const nameAndCaps = (name + ' ' + capabilities.join(' ')).toLowerCase();
+    
+    if (nameAndCaps.includes('需求')) {
+      outputs.push("requirements-document", "acceptance-criteria", "stakeholder-matrix");
+    } else if (nameAndCaps.includes('设计')) {
+      outputs.push("design-document", "architecture-spec", "interface-definition");
+    } else if (nameAndCaps.includes('编码') || nameAndCaps.includes('开发')) {
+      outputs.push("source-code", "unit-tests", "code-documentation");
+    } else if (nameAndCaps.includes('测试')) {
+      outputs.push("test-plan", "test-cases", "test-results");
+    } else if (nameAndCaps.includes('任务') || nameAndCaps.includes('管理')) {
+      outputs.push("project-plan", "progress-reports", "metrics-dashboard");
+    } else {
+      outputs.push("work-products", "documentation", "quality-reports");
+    }
+    
+    return outputs;
+  }
+
+  /**
+   * 生成前置条件
+   */
+  private static generatePrerequisites(phase: number): string[] {
+    switch (phase) {
+      case 0: return [];
+      case 1: return ["requirements-baseline"];
+      case 2: return ["design-approval"];
+      case 3: return ["code-completion"];
+      case 4: return ["project-initiation"];
+      default: return ["previous-phase-completion"];
+    }
+  }
+
+  /**
+   * 获取下一阶段
+   */
+  private static getNextPhase(phase: number): string {
+    const phases = ["design-phase", "coding-phase", "testing-phase", "deployment-phase", "maintenance-phase"];
+    return phases[phase] || "next-phase";
+  }
+
+  /**
+   * 生成真实的示例
+   */
+  private static generateRealisticExamples(name: string, capabilities: string[]): string[] {
+    const examples = [];
+    const primaryCap = capabilities[0] || '专业服务';
+    
+    examples.push(`为${primaryCap}项目生成专业文档`);
+    examples.push(`执行${primaryCap}的质量检查`);
+    examples.push(`分析${primaryCap}的最佳实践`);
+    
+    if (capabilities.length > 1) {
+      examples.push(`集成${capabilities.slice(1).join('和')}功能`);
+    }
+    
+    return examples;
+  }
+
+  /**
+   * 根据代理名称生成合适的颜色
+   */
+  private static generateAgentColor(name: string): string {
+    const colorMap: Record<string, string> = {
+      'requirements': 'purple',
+      'design': 'blue',
+      'coding': 'green',
+      'test': 'red',
+      'tasks': 'orange',
+      'spec': 'teal'
+    };
+    
+    // 查找匹配的颜色
+    for (const [key, color] of Object.entries(colorMap)) {
+      if (name.toLowerCase().includes(key)) {
+        return color;
+      }
+    }
+    
+    return this.generateRandomColor();
   }
 
   /**

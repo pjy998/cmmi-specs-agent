@@ -1,4 +1,5 @@
 import os from 'os';
+import { logger } from '../utils/logger.js';
 import { 
   IMonitoringAlertingSystem,
   MonitoringMetrics,
@@ -61,7 +62,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 收集系统指标
    */
   async collectMetrics(targets?: string[]): Promise<MonitoringMetrics> {
-    console.log('📊 收集系统指标...');
+    logger.info('📊 收集系统指标...');
 
     const timestamp = new Date();
     
@@ -98,7 +99,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 查询历史指标
    */
   async getMetrics(query: string, timeRange: TimeRange): Promise<any[]> {
-    console.log(`📈 查询指标: ${query}`);
+    logger.info(`📈 查询指标: ${query}`);
     
     // 这里实现指标查询逻辑
     const cachedData = this.metricsCache.get(query) || [];
@@ -110,7 +111,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 创建报警规则
    */
   async createAlertRule(rule: AlertRule): Promise<void> {
-    console.log(`🚨 创建报警规则: ${rule.name}`);
+    logger.info(`🚨 创建报警规则: ${rule.name}`);
     
     rule.metadata = {
       ...rule.metadata,
@@ -126,7 +127,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 更新报警规则
    */
   async updateAlertRule(ruleId: string, updates: Partial<AlertRule>): Promise<void> {
-    console.log(`📝 更新报警规则: ${ruleId}`);
+    logger.info(`📝 更新报警规则: ${ruleId}`);
     
     const existingRule = this.alertRules.get(ruleId);
     if (!existingRule) {
@@ -150,7 +151,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 删除报警规则
    */
   async deleteAlertRule(ruleId: string): Promise<void> {
-    console.log(`🗑️ 删除报警规则: ${ruleId}`);
+    logger.info(`🗑️ 删除报警规则: ${ruleId}`);
     
     if (!this.alertRules.has(ruleId)) {
       throw new Error(`报警规则不存在: ${ruleId}`);
@@ -163,7 +164,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 获取活跃报警
    */
   async getActiveAlerts(filters?: any): Promise<Alert[]> {
-    console.log('📋 获取活跃报警...');
+    logger.info('📋 获取活跃报警...');
     
     let alerts = Array.from(this.activeAlerts.values());
     
@@ -178,7 +179,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 确认报警
    */
   async acknowledgeAlert(alertId: string, user: string): Promise<void> {
-    console.log(`✅ 确认报警: ${alertId} by ${user}`);
+    logger.info(`✅ 确认报警: ${alertId} by ${user}`);
     
     const alert = this.activeAlerts.get(alertId);
     if (!alert) {
@@ -196,7 +197,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 解决报警
    */
   async resolveAlert(alertId: string, user: string): Promise<void> {
-    console.log(`🔧 解决报警: ${alertId} by ${user}`);
+    logger.info(`🔧 解决报警: ${alertId} by ${user}`);
     
     const alert = this.activeAlerts.get(alertId);
     if (!alert) {
@@ -214,7 +215,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 设置异常检测
    */
   async setupAnomalyDetection(config: AnomalyDetection): Promise<void> {
-    console.log(`🤖 设置异常检测: ${config.metric}`);
+    logger.info(`🤖 设置异常检测: ${config.metric}`);
     
     config.status = 'active';
     config.results = [];
@@ -226,7 +227,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 检测异常
    */
   async detectAnomalies(metric: string, timeRange: TimeRange): Promise<AnomalyResult[]> {
-    console.log(`🔍 检测异常: ${metric}`);
+    logger.info(`🔍 检测异常: ${metric}`);
     
     const detector = Array.from(this.anomalyDetectors.values())
       .find(d => d.metric === metric);
@@ -248,7 +249,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 创建仪表板
    */
   async createDashboard(dashboard: MonitoringDashboard): Promise<void> {
-    console.log(`📊 创建仪表板: ${dashboard.name}`);
+    logger.info(`📊 创建仪表板: ${dashboard.name}`);
     
     this.dashboards.set(dashboard.id, dashboard);
   }
@@ -257,7 +258,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 更新仪表板
    */
   async updateDashboard(dashboardId: string, updates: Partial<MonitoringDashboard>): Promise<void> {
-    console.log(`📝 更新仪表板: ${dashboardId}`);
+    logger.info(`📝 更新仪表板: ${dashboardId}`);
     
     const existing = this.dashboards.get(dashboardId);
     if (!existing) {
@@ -272,7 +273,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 获取仪表板
    */
   async getDashboard(dashboardId: string): Promise<MonitoringDashboard> {
-    console.log(`📊 获取仪表板: ${dashboardId}`);
+    logger.info(`📊 获取仪表板: ${dashboardId}`);
     
     const dashboard = this.dashboards.get(dashboardId);
     if (!dashboard) {
@@ -286,7 +287,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 查询日志
    */
   async queryLogs(query: LogQuery): Promise<LogEntry[]> {
-    console.log(`📝 查询日志: ${query.query}`);
+    logger.info(`📝 查询日志: ${query.query}`);
     
     let logs = this.logsBuffer.slice();
     
@@ -317,7 +318,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 流式日志
    */
   async streamLogs(query: LogQuery, callback: (log: LogEntry) => void): Promise<void> {
-    console.log(`📡 流式日志: ${query.query}`);
+    logger.info(`📡 流式日志: ${query.query}`);
     
     // 模拟流式日志处理
     const interval = setInterval(() => {
@@ -343,7 +344,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 获取链路追踪
    */
   async getTrace(traceId: string): Promise<Trace> {
-    console.log(`🔗 获取链路追踪: ${traceId}`);
+    logger.info(`🔗 获取链路追踪: ${traceId}`);
     
     // 模拟链路追踪数据
     const trace: Trace = {
@@ -374,7 +375,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 查询链路追踪
    */
   async queryTraces(_query: any, _timeRange: TimeRange): Promise<Trace[]> {
-    console.log(`🔍 查询链路追踪: ${JSON.stringify(_query)}`);
+    logger.info(`🔍 查询链路追踪: ${JSON.stringify(_query)}`);
     
     // 模拟返回追踪数据
     const traces: Trace[] = [];
@@ -386,7 +387,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 添加监控目标
    */
   async addTarget(target: MonitoringTarget): Promise<void> {
-    console.log(`🎯 添加监控目标: ${target.name}`);
+    logger.info(`🎯 添加监控目标: ${target.name}`);
     
     target.status = 'healthy';
     target.lastCheck = new Date();
@@ -401,7 +402,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 移除监控目标
    */
   async removeTarget(targetId: string): Promise<void> {
-    console.log(`🗑️ 移除监控目标: ${targetId}`);
+    logger.info(`🗑️ 移除监控目标: ${targetId}`);
     
     if (!this.targets.has(targetId)) {
       throw new Error(`监控目标不存在: ${targetId}`);
@@ -414,7 +415,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 检查目标健康状态
    */
   async checkTargetHealth(targetId: string): Promise<boolean> {
-    console.log(`💚 检查目标健康状态: ${targetId}`);
+    logger.info(`💚 检查目标健康状态: ${targetId}`);
     
     const target = this.targets.get(targetId);
     if (!target) {
@@ -436,7 +437,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 生成报告
    */
   async generateReport(reportId: string): Promise<MonitoringReport> {
-    console.log(`📄 生成报告: ${reportId}`);
+    logger.info(`📄 生成报告: ${reportId}`);
     
     const report: MonitoringReport = {
       id: reportId,
@@ -471,17 +472,17 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 计划报告
    */
   async scheduleReport(report: MonitoringReport): Promise<void> {
-    console.log(`📅 计划报告: ${report.name}`);
+    logger.info(`📅 计划报告: ${report.name}`);
     
     // 这里实现报告调度逻辑
-    console.log(`报告已计划，将按 ${report.schedule?.frequency} 频率生成`);
+    logger.info(`报告已计划，将按 ${report.schedule?.frequency} 频率生成`);
   }
 
   /**
    * 更新配置
    */
   async updateConfig(config: Partial<MonitoringSystemConfig>): Promise<void> {
-    console.log('⚙️ 更新监控系统配置...');
+    logger.info('⚙️ 更新监控系统配置...');
     this.updateConfigSync(config);
   }
 
@@ -496,7 +497,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 设置Prometheus集成
    */
   async setupPrometheusIntegration(config: PrometheusConfig): Promise<void> {
-    console.log(`🔗 设置Prometheus集成: ${config.endpoint}`);
+    logger.info(`🔗 设置Prometheus集成: ${config.endpoint}`);
     
     this.config.integrations.prometheus = config;
   }
@@ -505,7 +506,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 设置Grafana集成
    */
   async setupGrafanaIntegration(config: GrafanaConfig): Promise<void> {
-    console.log(`📊 设置Grafana集成: ${config.endpoint}`);
+    logger.info(`📊 设置Grafana集成: ${config.endpoint}`);
     
     this.config.integrations.grafana = config;
   }
@@ -544,7 +545,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 导出数据
    */
   async exportData(query: any, format: string): Promise<any> {
-    console.log(`📤 导出数据: ${format}格式`);
+    logger.info(`📤 导出数据: ${format}格式`);
     
     const data = {
       query,
@@ -565,14 +566,14 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
    * 导入数据
    */
   async importData(data: any, format: string): Promise<void> {
-    console.log(`📥 导入数据: ${format}格式`);
+    logger.info(`📥 导入数据: ${format}格式`);
     
     if (format === 'json' && typeof data === 'string') {
       data = JSON.parse(data);
     }
 
     // 这里实现数据导入逻辑
-    console.log('数据导入完成');
+    logger.info('数据导入完成');
   }
 
   // 私有方法实现...
@@ -968,7 +969,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
     // 执行报警动作
     await this.executeAlertActions(alert, rule);
     
-    console.log(`🚨 触发报警: ${alert.name} (${alert.severity})`);
+    logger.info(`🚨 触发报警: ${alert.name} (${alert.severity})`);
   }
 
   private mapPriorityToSeverity(priority: number): Alert['severity'] {
@@ -1021,15 +1022,15 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
   }
 
   private async sendNotification(alert: Alert, config: any): Promise<void> {
-    console.log(`📧 发送通知: ${alert.name} -> ${config.channel || 'default'}`);
+    logger.info(`📧 发送通知: ${alert.name} -> ${config.channel || 'default'}`);
   }
 
   private async callWebhook(_alert: Alert, config: any): Promise<void> {
-    console.log(`🌐 调用Webhook: ${config.url}`);
+    logger.info(`🌐 调用Webhook: ${config.url}`);
   }
 
   private async executeScript(_alert: Alert, config: any): Promise<void> {
-    console.log(`⚙️ 执行脚本: ${config.script}`);
+    logger.info(`⚙️ 执行脚本: ${config.script}`);
   }
 
   private filterByTimeRange(data: any[], timeRange: TimeRange): any[] {
@@ -1151,21 +1152,21 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
   private async httpHealthCheck(target: MonitoringTarget): Promise<boolean> {
     // 模拟HTTP健康检查
     const success = Math.random() > 0.1; // 90%成功率
-    console.log(`🌐 HTTP健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
+    logger.info(`🌐 HTTP健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
     return success;
   }
 
   private async tcpHealthCheck(target: MonitoringTarget): Promise<boolean> {
     // 模拟TCP健康检查
     const success = Math.random() > 0.05; // 95%成功率
-    console.log(`🔌 TCP健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
+    logger.info(`🔌 TCP健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
     return success;
   }
 
   private async pingHealthCheck(target: MonitoringTarget): Promise<boolean> {
     // 模拟Ping健康检查
     const success = Math.random() > 0.02; // 98%成功率
-    console.log(`📶 Ping健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
+    logger.info(`📶 Ping健康检查 ${target.name}: ${success ? '成功' : '失败'}`);
     return success;
   }
 
@@ -1181,7 +1182,7 @@ export class MonitoringAlertingSystem implements IMonitoringAlertingSystem {
         
         // 如果状态改变，记录事件
         if (previousStatus !== currentTarget.status) {
-          console.log(`🔄 目标状态变更: ${target.name} ${previousStatus} -> ${currentTarget.status}`);
+          logger.info(`🔄 目标状态变更: ${target.name} ${previousStatus} -> ${currentTarget.status}`);
         }
         
         this.targets.set(target.id, currentTarget);
