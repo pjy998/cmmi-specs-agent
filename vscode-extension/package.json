@@ -2,7 +2,7 @@
   "name": "cmmi-specs-vscode",
   "displayName": "CMMI Specs Agent",
   "description": "VS Code extension for CMMI Level 3 development workflow automation",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -62,11 +62,12 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.5.0"
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@vscode/vsce": "^3.6.0"
   }
 }
